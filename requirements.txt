@@ -1,0 +1,8 @@
+numpy
+sklearn
+scipy
+matplotlib
+absl-py 
+gin-config 
+cffi
+tensorflow

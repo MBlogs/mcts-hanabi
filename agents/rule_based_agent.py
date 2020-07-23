@@ -34,7 +34,6 @@ class RuleBasedAgent(Agent):
           continue
         else:
           return False
-
       return True
     elif card['color'] == None or card['rank'] == None:
       return False

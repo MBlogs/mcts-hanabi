@@ -90,8 +90,8 @@ class HanabiEnv(Environment):
     assert isinstance(config, dict), "Expected config to be of type dict."
     self.game = pyhanabi.HanabiGame(config)
 
-    self.observation_encoder = pyhanabi.ObservationEncoder(
-        self.game, pyhanabi.ObservationEncoderType.CANONICAL)
+    #self.observation_encoder = pyhanabi.ObservationEncoder(
+    #    self.game, pyhanabi.ObservationEncoderType.CANONICAL)
     self.players = self.game.num_players()
 
   def reset(self):
@@ -140,6 +140,7 @@ class HanabiEnv(Environment):
     # Apply the action to the state
     self.state.apply_move(action)
     if debug: print("MB: Applied the action")
+    print(f"MB: rl_env.step: Player {self.state.cur_player()} Applied action {action}")
     done = self.state.is_terminal()
 
     # MB: Deals with standard scenario if player need another card
@@ -147,15 +148,18 @@ class HanabiEnv(Environment):
       if debug: print("MB: Dealing random card")
       self.state.deal_random_card()
 
-    # MB: Now it is on next player. Should be able to replace fine; will be precisely their own.
-    self.state.replace_hand(self.state.cur_player())
-    if debug: print("MB: Player {} replaced hand".format(self.state.cur_player()))
-    if debug: self.print_state()
-    # MB: Now make observation, as it includes the new hand now
     observation = self._make_observation_all_players()
+    # MB: Now it is on next player. Should be able to replace fine; will be precisely their own.
+    if debug:
+      self.state.replace_hand(self.state.cur_player())
+      print("MB: Player {} replaced hand".format(self.state.cur_player()))
+      self.print_state()
+      # MB: Now make observation, as it includes the new hand now
+      observation = self._make_observation_all_players()
 
     # Reward is score differential. May be large and negative at game end.
-    reward = self.state.score() - last_score
+    # reward = self.state.score() - last_score
+    reward = self.state.fireworks_score()
     info = {}
     return (observation, reward, done, info)
 

@@ -1,5 +1,5 @@
 # MB Agent created during testing
-from hanabi_learning_environment.rl_env import Agent
+from rl_env import Agent
 
 class RISMCTSAgent(Agent):
   """Agent based on Redeterminizing Information Set Monte Carlo Tree Search"""

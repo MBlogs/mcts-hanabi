@@ -7,8 +7,9 @@ import rl_env
 from agents.random_agent import RandomAgent
 from agents.simple_agent import SimpleAgent
 from agents.rule_based_agent import RuleBasedAgent
+from agents.mcts.mcts_agent import MCTSAgent
 
-AGENT_CLASSES = {'SimpleAgent': SimpleAgent, 'RandomAgent': RandomAgent, 'RuleBasedAgent':RuleBasedAgent}
+AGENT_CLASSES = {'SimpleAgent': SimpleAgent, 'RandomAgent': RandomAgent, 'RuleBasedAgent':RuleBasedAgent, 'MCTSAgent':MCTSAgent}
 
 class Runner(object):
   """Runner class."""
@@ -25,14 +26,20 @@ class Runner(object):
     rewards = []
     for episode in range(flags['num_episodes']):
       observations = self.environment.reset()
-      # MB: Allow parsing of different Agents. N
+      # MB: Allow parsing of different Agents.
       agents = [agent_class(self.agent_config) for agent_class in self.agent_classes]
       done = False
       episode_reward = 0
       while not done:
         for agent_id, agent in enumerate(agents):
           observation = observations['player_observations'][agent_id]
-          action = agent.act(observation)
+          # MB: MCTSAgent needs to be passed full state to act as base for MCTS
+          # MB: Note that it replaces it's hand with random before each rollout so not 'cheating' by knowing the full state
+          if isinstance(agent, MCTSAgent):
+            action = agent.act(observation, self.environment.state)
+          else:
+            action = agent.act(observation)
+
           if observation['current_player'] == agent_id:
             assert action is not None
             current_player_action = action
@@ -60,7 +67,7 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 400, 'agent_classes': ['RuleBasedAgent', 'RuleBasedAgent', 'RuleBasedAgent']}
+  flags = {'players': 3, 'num_episodes': 400, 'agent_classes': ['RuleBasedAgent', 'RuleBasedAgent', 'MCTSAgent']}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

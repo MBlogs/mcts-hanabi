@@ -525,6 +525,8 @@ class HanabiState(object):
 
     NOTE: If c_state is supplied, game is ignored and c_state game is used.
     """
+    # MB: HanabiGame passes itself during new_initial_state
+    # MB: Otherwise it copies from existing
     self._state = ffi.new("pyhanabi_state_t*")
     if c_state is None:
       self._game = game.c_game
@@ -532,12 +534,13 @@ class HanabiState(object):
     else:
       self._game = lib.StateParentGame(c_state)
       lib.CopyState(c_state, self._state)
-    # MB: Create deck here too
-    self._deck = HanabiDeck(game)
+    # self.deck = HanabiDeck(game)
 
-  def copy(self):
+
+
+  def copy(self, game = None):
     """Returns a copy of the state."""
-    return HanabiState(None, self._state)
+    return HanabiState(game, self._state)
 
   def observation(self, player):
     """Returns player's observed view of current environment state."""
@@ -576,8 +579,10 @@ class HanabiState(object):
     """
     firework_list = []
     num_colors = lib.NumColors(self._game)
+    print(f"pyhanabi.HanabiState.fireworks: lib.NumColors is {num_colors}")
     for c in range(num_colors):
       firework_list.append(lib.StateFireworks(self._state, c))
+    print(f"MB: pyhanabi.HanabiState.fireworks returned {firework_list}")
     return firework_list
 
   def fireworks_score(self):
@@ -698,20 +703,20 @@ class HanabiState(object):
     # Then the only check needed is the card_knowledge check
     debug = False
     if debug: print("MB:  Replacing {}".format(self.player_hands()[player][card_index]))
-    self._deck.reset_deck()
+    self.deck.reset_deck()
 
     # MB: First run through discard pile
     for card in self.discard_pile():
-      self._deck.remove_card(card.color(), card.rank())
-    if debug: print("MB: valid cards after discard: {}".format(self._deck))
+      self.deck.remove_card(card.color(), card.rank())
+    if debug: print("MB: valid cards after discard: {}".format(self.deck))
 
     # MB: Then remove the cards that can be seen
-    self._deck.remove_by_hands(player, card_index, self.player_hands())
-    if debug: print("MB: valid cards after cards: {}".format(self._deck))
+    self.deck.remove_by_hands(player, card_index, self.player_hands())
+    if debug: print("MB: valid cards after cards: {}".format(self.deck))
 
     # MB: Then remove cards that are making up fireworks
-    self._deck.remove_by_fireworks(self.fireworks())
-    if debug: print("MB: valid cards after fireworks: {}".format(self._deck))
+    self.deck.remove_by_fireworks(self.fireworks())
+    if debug: print("MB: valid cards after fireworks: {}".format(self.deck))
 
     # MB: Finally use card knowledge player has about own hand from hints
     # MB: ! If retrieving something via C++ wrapper method need to assign to object first!
@@ -722,11 +727,11 @@ class HanabiState(object):
     # Yes because the observation was player based.So the first will be the same as player
     card_knowledge = temp_observation.card_knowledge()[0][card_index]
     if debug: print("MB: valid cards retrieved card_knowledge")
-    self._deck.remove_by_card_knowledge(card_knowledge)
+    self.deck.remove_by_card_knowledge(card_knowledge)
 
     # MB: Return list of remaining cards in the deck; the valid options
-    if debug: print("MB: Valid cards for player {} in position: {} are: {}".format(player,card_index,self._deck))
-    return self._deck.return_cards()
+    if debug: print("MB: Valid cards for player {} in position: {} are: {}".format(player,card_index,self.deck))
+    return self.deck.return_cards()
 
   def valid_card(self, player, card_index):
     return random.choice(self.valid_cards(player, card_index))
@@ -753,11 +758,14 @@ class HanabiDeck(object):
   """MB: Seperate class handling Python level deck functions for forward models"""
   # Store deck for easier theoretical manipulation
 
-  def __init__(self, _game):
+  def __init__(self, game):
     self.debug = False
-    self.num_ranks_ = _game.num_ranks()
-    self.num_colors_ = _game.num_colors()
-    self.num_cards = _game.num_cards
+    # lib.NumRanks and lib.NumCards suck
+    self.num_cards = game.num_cards
+    self.num_ranks_ = game.num_ranks()
+    print(f"deck num_ranks {self.num_ranks_}")
+    self.num_colors_ = game.num_colors()
+    print(f"deck num_colors {self.num_colors_}")
     self.card_count_ = []  # Card count entries are number 0 - 3, how many of card_index index there are in deck
     self.total_count_ = 0  # total cards in deck
     self.reset_deck()
@@ -765,7 +773,6 @@ class HanabiDeck(object):
   def reset_deck(self):
     self.card_count_ = []
     self.total_count_ = 0
-    # MB:Iteration is in same format as card_to_index, so fine to append (ORRR ARE WEEEE?)
     for color in range(self.num_colors_):
       for rank in range(self.num_ranks_):
         # MB: Num cards accounts for duplicate numbers for each card

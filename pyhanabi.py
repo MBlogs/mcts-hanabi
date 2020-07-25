@@ -532,8 +532,10 @@ class HanabiState(object):
     else:
       self._game = lib.StateParentGame(c_state)
       lib.CopyState(c_state, self._state)
+
     # MB: WARNING: Need a way of better Deck copying
-    # self._deck = HanabiDeck(game)
+    # _game and game on a State copy don't seem to work properly
+    self.deck = HanabiDeck()
 
   def copy(self):
     """Returns a copy of the state."""
@@ -756,17 +758,23 @@ class HanabiDeck(object):
   """MB: Seperate class handling Python level deck functions for forward models"""
   # Store deck for easier theoretical manipulation
 
-  def __init__(self, game):
+  def __init__(self):
     self.debug = False
-    # lib.NumRanks and lib.NumCards suck
-    self.num_cards = game.num_cards
-    self.num_ranks_ = game.num_ranks()
-    print(f"deck num_ranks {self.num_ranks_}")
-    self.num_colors_ = game.num_colors()
-    print(f"deck num_colors {self.num_colors_}")
+    self.num_ranks_ = 5
+    self.num_colors_ = 5
     self.card_count_ = []  # Card count entries are number 0 - 3, how many of card_index index there are in deck
     self.total_count_ = 0  # total cards in deck
     self.reset_deck()
+
+  def num_cards(self, color, rank):
+    # MB: Hack to get around _game HanabiState issues
+    assert rank >= 0 and rank <= 4
+    if rank == 0:
+      return 3
+    elif rank == 4:
+      return 1
+    else:
+      return 2
 
   def reset_deck(self):
     self.card_count_ = []

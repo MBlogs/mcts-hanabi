@@ -122,9 +122,7 @@ class HanabiEnv(Environment):
     return self.game.max_moves()
 
   def step(self, action):
-    debug = False
-
-    if debug: print("Player {} action: {}".format(self.state.cur_player(), action))
+    debug = True
 
     if isinstance(action, dict):
       # Convert dict action HanabiMove
@@ -140,7 +138,7 @@ class HanabiEnv(Environment):
     # Apply the action to the state
     if debug: print(f"MB: rl_env.step: Player {self.state.cur_player()} applying action {action}")
     self.state.apply_move(action)
-    if debug: print("MB: Applied the action")
+    # if debug: print("MB: Applied the action")
     done = self.state.is_terminal()
 
     # MB: Deals with standard scenario if player need another card

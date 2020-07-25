@@ -12,6 +12,7 @@ colors = ['Y', 'B', 'W', 'R', 'G']
 class MCTSAgent(Agent):
   """Agent based on Redeterminizing Information Set Monte Carlo Tree Search"""
 
+
   def __init__(self, config, **kwargs):
     """Initialize the agent."""
     # ToDo: Needs to know all HanabiEnv parameters
@@ -23,10 +24,13 @@ class MCTSAgent(Agent):
     self.root_state = None
     self.agents = [RuleBasedAgent(config), RuleBasedAgent(config), RuleBasedAgent(config)]
 
+
   def rollout_game(self):
     debug = True
     # MB: Hack, access the protected method
-    if debug: print(f"\n\nMB: mcts_agent.rollout_game: Entered")
+    if debug:
+      print("\n\n ##################################################  ")
+      print(" ################ START MCTS ROLLOUT ############## ")
     # MB: Test not copying
     self.environment.state = self.root_state.copy()
     #if debug: print(f"MB: mcts_agent.rollout_game: Copied state fireworks is: {self.environment.state.fireworks()}")
@@ -48,28 +52,25 @@ class MCTSAgent(Agent):
           assert action is None
       observations, reward, done, unused_info = self.environment.step(current_player_action)
       # MB: for some reason, state has all 5 fireworks but observation only has 3.
-    print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward} \n\n")
+    print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
+
 
   def act(self, observation, state):
     """MB: Act based on an observation. """
     debug = True
     if observation['current_player_offset'] != 0:
       return None
+
     if debug: print("MB: mcts_agent.act: Deciding MCTS action")
     self.root_state = state
     # MB: Need to remember to randomise MCTSAgent hand before rolling out anything
     self.rollout_game()
-    if debug: print("MB: mcts_agent.act: A game fully completed roll out ")
+    if debug: print(" ################################################## ")
+    if debug: print(" ############### END MCTS ROLLOUT ################# \n\n")
     # Determinize: Sample our cards, create perfect information state.
     # Need to then create that state for our own HanabiEnvironment
     return self.default_act(observation)
 
-  def do_rollout(self, node):
-    path = self._select(node)
-    leaf = path[-1]
-    self._expand(leaf)
-    reward = self._simulate(leaf)
-    self._backpropagate(path, reward)
 
   def playable_card(self, card, fireworks):
     """A card is playable if it can be placed on the fireworks pile."""
@@ -125,6 +126,14 @@ class MCTSAgent(Agent):
       return {'action_type': 'DISCARD', 'card_index': 0}
     else:
       return {'action_type': 'PLAY', 'card_index': 0}
+
+
+  def do_rollout(self, node):
+    path = self._select(node)
+    leaf = path[-1]
+    self._expand(leaf)
+    reward = self._simulate(leaf)
+    self._backpropagate(path, reward)
 
 
   def _select(self, node):

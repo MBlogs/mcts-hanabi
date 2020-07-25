@@ -525,8 +525,6 @@ class HanabiState(object):
 
     NOTE: If c_state is supplied, game is ignored and c_state game is used.
     """
-    # MB: HanabiGame passes itself during new_initial_state
-    # MB: Otherwise it copies from existing
     self._state = ffi.new("pyhanabi_state_t*")
     if c_state is None:
       self._game = game.c_game
@@ -534,13 +532,12 @@ class HanabiState(object):
     else:
       self._game = lib.StateParentGame(c_state)
       lib.CopyState(c_state, self._state)
-    # self.deck = HanabiDeck(game)
+    # MB: WARNING: Need a way of better Deck copying
+    # self._deck = HanabiDeck(game)
 
-
-
-  def copy(self, game = None):
+  def copy(self):
     """Returns a copy of the state."""
-    return HanabiState(game, self._state)
+    return HanabiState(None, self._state)
 
   def observation(self, player):
     """Returns player's observed view of current environment state."""
@@ -578,11 +575,12 @@ class HanabiState(object):
     played, this function returns [1, 0, 0, 0, 0].
     """
     firework_list = []
-    num_colors = lib.NumColors(self._game)
-    print(f"pyhanabi.HanabiState.fireworks: lib.NumColors is {num_colors}")
+    # MB Hack: This line originally: lib.NumColors(self._game), but broke copying HanabiState.
+    # MB: Replaced by hard-coded
+    num_colors = 5
+    # print(f"pyhanabi.HanabiState.fireworks: lib.NumColors is {num_colors}")
     for c in range(num_colors):
       firework_list.append(lib.StateFireworks(self._state, c))
-    print(f"MB: pyhanabi.HanabiState.fireworks returned {firework_list}")
     return firework_list
 
   def fireworks_score(self):

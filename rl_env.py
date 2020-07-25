@@ -138,9 +138,9 @@ class HanabiEnv(Environment):
     last_score = self.state.score()
 
     # Apply the action to the state
+    if debug: print(f"MB: rl_env.step: Player {self.state.cur_player()} applying action {action}")
     self.state.apply_move(action)
     if debug: print("MB: Applied the action")
-    print(f"MB: rl_env.step: Player {self.state.cur_player()} Applied action {action}")
     done = self.state.is_terminal()
 
     # MB: Deals with standard scenario if player need another card

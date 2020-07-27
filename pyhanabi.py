@@ -736,10 +736,10 @@ class HanabiState(object):
   def valid_card(self, player, card_index):
     return random.choice(self.valid_cards(player, card_index))
 
-  def replace_hand(self, player):
+  def replace_hand(self):
     """Redeterminise a player's hand based on valid permuation"""
     debug = False
-    assert player == self.cur_player()
+    player = self.cur_player()
     for card_index in range(len(self.player_hands()[player])):
       # MB: There is a possibility when redeterminising that the hand ends up no longer valid
       valid_card = self.valid_card(player, card_index)

@@ -33,12 +33,12 @@ class MCTSAgent(Agent):
       print(" ################ START MCTS ROLLOUT ############## ")
     # MB: Test not copying
     self.environment.state = self.root_state.copy()
-    #if debug: print(f"MB: mcts_agent.rollout_game: Copied state fireworks is: {self.environment.state.fireworks()}")
+    # if debug: print(f"MB: mcts_agent.rollout_game: Copied state fireworks is: {self.environment.state.fireworks()}")
     # The observations are the thing that messes it up
     observations = self.environment._make_observation_all_players()
-    #if debug: print(f"MB: Copied state. The new state after observation {self.environment.state}")
-    #if debug: print(f"MB: mcts_agent.rollout_game: At start example observation: \n{observations['player_observations'][0]}\n")
-    #if debug: print(f"MB: mcts_agent.rollout_game: fireworks are: {self.environment.state.fireworks()}")
+    # if debug: print(f"MB: Copied state. The new state after observation {self.environment.state}")
+    # if debug: print(f"MB: mcts_agent.rollout_game: At start example observation: \n{observations['player_observations'][0]}\n")
+    # if debug: print(f"MB: mcts_agent.rollout_game: fireworks are: {self.environment.state.fireworks()}")
     done = False
     while not done:
       for agent_id, agent in enumerate(self.agents):
@@ -103,8 +103,10 @@ class MCTSAgent(Agent):
     if observation['information_tokens'] > 0:
       # Check if there are any playable cards in the hands of the opponents.
       for player_offset in range(1, observation['num_players']):
+
         player_hand = observation['observed_hands'][player_offset]
         player_hints = observation['card_knowledge'][player_offset]
+
         # Check if the card in the hand of the opponent is playable.
         for card, hint in zip(player_hand, player_hints):
           if self.playable_card(card,
@@ -151,19 +153,48 @@ class MCTSAgent(Agent):
         return path
       node = self._uct_select(node)  # descend a layer deeper
 
+
   def _expand(self, node):
     "Update the `children` dict with the children of `node`"
     if node in self.children:
       return  # already expanded
     self.children[node] = node.find_children()
 
+
   def _simulate(self, node):
-    "Returns the reward for a random simulation (to completion) of `node`"
-    while True:
-      if node.is_terminal():
-        reward = node.reward()
-        return reward
-      node = node.find_random_child()
+    "MB: Returns the reward for a random simulation (to completion) of `node`"
+    # TODO:Influence rollout depth, all agent models, reward function
+
+    debug = True
+    if debug:
+      print("\n\n ##################################################  ")
+      print(" ################ START MCTS ROLLOUT ############## ")
+
+    self.environment.state = self.root_state.copy()
+    # MB: Hack to force an initial observation
+    observations = self.environment._make_observation_all_players()
+
+    done = False
+    while not done:
+      for agent_id, agent in enumerate(self.agents):
+        observation = observations['player_observations'][agent_id]
+        action = agent.act(observation)
+        if observation['current_player'] == agent_id:
+          assert action is not None
+          if debug: print(f"MB: mcts_agent.rollout_game: Got agent {agent_id} action {action}")
+          current_player_action = action
+        else:
+          assert action is None
+      observations, reward, done, unused_info = self.environment.step(current_player_action)
+
+    if debug: print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
+    return reward / 25.0
+
+    # while True:
+    #   if node.is_terminal():
+    #     reward = node.reward()
+    #     return reward
+    #   node = node.find_random_child()
 
   def _backpropagate(self, path, reward):
     "Send the reward back up to the ancestors of the leaf"
@@ -184,3 +215,8 @@ class MCTSAgent(Agent):
       )
     return max(self.children[node], key=uct)
 
+
+'''
+1. How to reach a node state in _select when the actions to get there might not be compatible with new master determinisation?
+2. 
+'''

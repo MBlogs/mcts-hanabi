@@ -4,7 +4,7 @@ from rl_env import Agent
 from collections import defaultdict
 import math
 from agents.rule_based_agent import RuleBasedAgent
-from agents.mcts import MCTSNode
+from agents.mcts.mcts_node import MCTSNode
 
 AGENT_CLASSES = {'RuleBasedAgent':RuleBasedAgent}
 
@@ -22,40 +22,71 @@ class MCTSAgent(Agent):
     self.exploration_constant = 0.1
     self.rollout_num = 10
     self.max_simulation_steps = 2
+    # Dictionary of lists of nodes
     self.children = dict()
     self.Q = defaultdict(int)
     self.N = defaultdict(int)
     self.agents = [RuleBasedAgent(config), RuleBasedAgent(config), RuleBasedAgent(config)]
 
   def act(self, observation, state):
+    debug = True
     if observation['current_player_offset'] != 0:
       return None
-    self.root_node = MCTSNode([], None)
+
+    self.root_state = state.copy()
+    self.root_node = MCTSNode((), None)
     self.N[self.root_node] = 0
     self.Q[self.root_node] = 0
 
+    if debug:
+      print(" ################################################## ")
+      print(" ################ START MCTS FORWARD MODEL ROLLOUTS ################## ")
+
     for r in range(self.rollout_num):
-      # Copy and do master determinisation
+      if debug: print(f" ################ START MCTS ROLLOUT: {r} ############## ")
+      # Reset state of root node and environment
       self.root_node.state = self.root_state.copy()
+      # Master determinisation
       self.root_node.state.replace_hand()
-      self._do_rollout(self.root_node)
+      self.environment.state = self.root_node.state
+      print("MB: Player {} replaced hand".format(self.environment.state.cur_player()))
+      reward = self._do_rollout(self.root_node)
+      if debug:
+        print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
+        print(f" ############### END MCTS ROLLOUT: {r} ################# \n")
+      if r % 10 == 0:
+        if debug: print(f"MB: mcts_agent.act completed {r} rollouts")
+
+    if debug:
+      print("\n\n ################################################## ")
+      print(" ################ END MCTS FORWARD MODEL ROLLOUTS ################## \n\n")
 
     # Now at the end of training, so choose best
-    self.choose(self.root_node)
+    best_node = self._choose(self.root_node)
+    return best_node.initial_move()
 
 
   def _do_rollout(self, node):
+    # Select the path through tree and expansion node
     path = self._select(node)
     leaf = path[-1]
+    # Assign the focused_state of the node (if possible)
+    # ToDo: won't always be valid
+    for move in leaf.moves:
+      self.environment.step(move)
+    leaf.focused_state = self.environment.state
     self._expand(leaf)
     reward = self._simulate(leaf)
     self._backpropagate(path, reward)
+    # Don't need to return reward but do it anyway
+    return reward
 
 
   def _choose(self, node):
     ''' Choose move in game '''
-    if node.is_terminal():
-      raise RuntimeError(f"choose called on terminal node {node}")
+    # ToDO: How to handle terminal nodes?
+    # if node.is_terminal():
+    #  raise RuntimeError(f"choose called on terminal node {node}")
     if node not in self.children:
       return node.find_random_child()
 
@@ -93,12 +124,9 @@ class MCTSAgent(Agent):
   def _simulate(self, node):
     "MB: Returns the reward for a random simulation (to completion) of `node`"
     debug = True
-    if debug:
-      print("\n\n ##################################################  ")
-      print(" ################ START MCTS ROLLOUT ############## ")
 
     # MB: Note: The nodes state needs to be copied and determinized/sound by here
-    self.environment.state = node.state
+    self.environment.state = node.focused_state
     observations = self.environment._make_observation_all_players()
 
     done = False
@@ -112,9 +140,7 @@ class MCTSAgent(Agent):
 
       observations, reward, done, unused_info = self.environment.step(current_player_action)
       steps += 1
-      if not done: done = steps < self.max_simulation_steps
-
-    if debug: print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
+      if not done: done = steps > self.max_simulation_steps
     return reward / 25.0
 
 

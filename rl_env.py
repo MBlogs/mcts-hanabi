@@ -130,6 +130,8 @@ class HanabiEnv(Environment):
     elif isinstance(action, int):
       # Convert int action into a Hanabi move.
       action = self.game.get_move(action)
+    elif isinstance(action, pyhanabi.HanabiMove):
+      pass
     else:
       raise ValueError("Expected action as dict or int, got: {}".format(
           action))
@@ -149,7 +151,7 @@ class HanabiEnv(Environment):
     observation = self._make_observation_all_players()
     # MB: Now it is on next player. Should be able to replace fine; will be precisely their own.
     if debug:
-      self.state.replace_hand(self.state.cur_player())
+      self.state.replace_hand()
       print("MB: Player {} replaced hand".format(self.state.cur_player()))
       self.print_state()
       # MB: Now make observation, as it includes the new hand now

@@ -747,11 +747,11 @@ class HanabiState(object):
       assert valid_card is not None # MB: This is where it could slip up; intra-hand conflict
       return_move = HanabiMove.get_return_move(card_index=card_index)
       self.apply_move(return_move)
-      if debug: print("MB: replace_hand passed return move")
+      #if debug: print("MB: replace_hand passed return move")
       # Check where this is dealt to
       deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, valid_card.color(), valid_card.rank())
       self.apply_move(deal_specific_move)
-      if debug: print("MB: replace_hand successfully replaced that card")
+      #if debug: print("MB: replace_hand successfully replaced that card")
 
 
 class HanabiDeck(object):

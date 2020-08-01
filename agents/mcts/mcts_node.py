@@ -39,15 +39,11 @@ class Node(ABC):
 
 
 class MCTSNode(Node):
-  def __init__(self, moves, focused_state):
-    # MB: moves_list distinctly defines this node
-    # MB: state is subject to change based on determinisation
-    self.focused_state = focused_state
+  def __init__(self, moves):
     # MB: moves is a tuple of moves that uniquely identify this node
     self.moves = moves
-    self.visits = 0
-    self.rewards = 0
-
+    # MB: state is subject to change based on determinisation
+    self.focused_state = None
 
   def find_children(self):
     "All possible successors of this board state"
@@ -55,12 +51,12 @@ class MCTSNode(Node):
     # MB: So this is technically only one version of possible children
     # Node needs a focused state to get next possible moves from
     assert self.focused_state is not None
-    children = [MCTSNode(self.moves + (move,), None) for move in self.focused_state.legal_moves()]
+    children = [MCTSNode(self.moves + (move,)) for move in self.focused_state.legal_moves()]
     return children
 
   def find_random_child(self):
     "Random successor of this board state (for more efficient simulation)"
-    return random.choice(self.state.legal_moves())
+    return random.choice(self.find_children())
 
 
   def is_terminal(self):
@@ -76,11 +72,12 @@ class MCTSNode(Node):
     "Assumes `self` is terminal node. 1=win, 0=loss, .5=tie, etc"
     return self.focused_state.fireworks_score()
 
+  def __str__(self):
+    return f"{self.moves}"
 
   def __hash__(self):
     "Nodes must be hashable"
     return hash(self.moves)
-
 
   def __eq__(node1, node2):
     "Nodes must be comparable"

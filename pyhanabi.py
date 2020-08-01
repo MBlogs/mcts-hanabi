@@ -366,6 +366,33 @@ class HanabiMove(object):
     assert lib.GetRevealRankMove(target_offset, rank, c_move)
     return HanabiMove(c_move)
 
+  def __hash__(self):
+    # Hash a move by concatenating all identifiers
+    return hash(self.__str__())
+
+  def __eq__(self, other):
+    # MB: Overide the move check for equality. Depends on move type
+    if self.type() != other.type():
+      return False
+    # MB: Define what move equality means, depending on MoveType
+    if self.type() == HanabiMoveType.PLAY:
+      return self.card_index() == other.card_index()
+    elif self.type() == HanabiMoveType.DISCARD:
+      return self.card_index() == other.card_index()
+    elif self.type() == HanabiMoveType.RETURN:
+      return self.card_index() == other.card_index()
+    elif self.type() == HanabiMoveType.REVEAL_COLOR:
+      return self.target_offset() == other.target_offset() and self.color() == other.color()
+    elif self.type() == HanabiMoveType.REVEAL_RANK:
+      return self.target_offset() == other.target_offset() and self.rank() == other.rank()
+    elif self.type() == HanabiMoveType.DEAL:
+      return self.color() == other.color() and self.rank() == other.rank()
+    elif self.type() == HanabiMoveType.DEAL_SPECIFIC:
+      return self.color() == other.color() and self.rank() == other.rank()
+    else:
+      print(f"MB: pyhanabi.HanabiMove.__eq__ : failed to recognise move type: {self.type()} {other.type()}")
+      return False
+
   def __str__(self):
     c_string = lib.MoveToString(self._move)
     string = encode_ffi_string(c_string)

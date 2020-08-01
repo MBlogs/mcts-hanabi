@@ -19,8 +19,8 @@ class MCTSAgent(Agent):
     self.root_node = None
     self.root_state = None
     # MB: Nodes hashed by moves to get there
-    self.exploration_constant = 0.1
-    self.rollout_num = 10
+    self.exploration_weight = 0.1
+    self.rollout_num = 100
     self.max_simulation_steps = 2
     # Dictionary of lists of nodes
     self.children = dict()
@@ -33,10 +33,7 @@ class MCTSAgent(Agent):
     if observation['current_player_offset'] != 0:
       return None
 
-    self.root_state = state.copy()
-    self.root_node = MCTSNode((), None)
-    self.N[self.root_node] = 0
-    self.Q[self.root_node] = 0
+    self._reset(state)
 
     if debug:
       print(" ################################################## ")
@@ -52,10 +49,9 @@ class MCTSAgent(Agent):
       print("MB: Player {} replaced hand".format(self.environment.state.cur_player()))
       reward = self._do_rollout(self.root_node)
       if debug:
+        print(f"MB: mcts_agent.act: Tree looks like {self._get_tree_string()}")
         print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
         print(f" ############### END MCTS ROLLOUT: {r} ################# \n")
-      if r % 10 == 0:
-        if debug: print(f"MB: mcts_agent.act completed {r} rollouts")
 
     if debug:
       print("\n\n ################################################## ")
@@ -67,13 +63,19 @@ class MCTSAgent(Agent):
 
 
   def _do_rollout(self, node):
+    debug = True
+
     # Select the path through tree and expansion node
     path = self._select(node)
     leaf = path[-1]
+
     # Assign the focused_state of the node (if possible)
-    # ToDo: won't always be valid
     for move in leaf.moves:
-      self.environment.step(move)
+      if not any(move == legal_move for legal_move in self.environment.state.legal_moves()):
+        if debug: print(f"MB: mcts_agent._do_rollout: move {move} not valid for this determinisation")
+        return -1
+      observations, reward, done, unused_info = self.environment.step(move)
+
     leaf.focused_state = self.environment.state
     self._expand(leaf)
     reward = self._simulate(leaf)
@@ -85,8 +87,8 @@ class MCTSAgent(Agent):
   def _choose(self, node):
     ''' Choose move in game '''
     # ToDO: How to handle terminal nodes?
-    # if node.is_terminal():
-    #  raise RuntimeError(f"choose called on terminal node {node}")
+    if node.is_terminal():
+      raise RuntimeError(f"choose called on terminal node {node}")
     if node not in self.children:
       return node.find_random_child()
 
@@ -162,6 +164,21 @@ class MCTSAgent(Agent):
         log_N_vertex / self.N[n]
       )
     return max(self.children[node], key=uct)
+
+  def _reset(self, state):
+    self.root_state = state.copy()
+    self.root_node = MCTSNode(())
+    self.children = dict()
+    self.Q = defaultdict(int)
+    self.N = defaultdict(int)
+    self.N[self.root_node] = 0
+    self.Q[self.root_node] = 0
+
+  def _get_tree_string(self):
+    tree_string = ""
+    for node, children in self.children.items():
+      tree_string += f"[{node}: {self.N[node]}, {self.Q[node]}] "
+    return tree_string
 
 
   def old_act(self, observation, state):

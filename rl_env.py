@@ -122,7 +122,7 @@ class HanabiEnv(Environment):
     return self.game.max_moves()
 
   def step(self, action):
-    debug = True
+    debug = False
 
     if isinstance(action, dict):
       # Convert dict action HanabiMove
@@ -150,16 +150,15 @@ class HanabiEnv(Environment):
 
     observation = self._make_observation_all_players()
     # MB: Now it is on next player. Should be able to replace fine; will be precisely their own.
-    if debug:
-      self.state.replace_hand()
-      print("MB: Player {} replaced hand".format(self.state.cur_player()))
-      self.print_state()
-      # MB: Now make observation, as it includes the new hand now
-      observation = self._make_observation_all_players()
+    self.state.replace_hand()
+    if debug: print("MB: Player {} replaced hand".format(self.state.cur_player()))
+    if debug: self.print_state()
+    # MB: Now make observation, as it includes the new hand now
+    observation = self._make_observation_all_players()
 
     # Reward is score differential. May be large and negative at game end.
     # reward = self.state.score() - last_score
-    reward = self.state.fireworks_score()
+    reward = self.state.reward()
     info = {}
     return (observation, reward, done, info)
 

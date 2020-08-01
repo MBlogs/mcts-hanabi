@@ -620,6 +620,14 @@ class HanabiState(object):
       score += f
     return score
 
+  def reward(self):
+    # MB: How to handle early is_terminal?
+    #ToDO: Hacky
+    if self.is_terminal():
+      return 0
+    else:
+      return self.fireworks_score()
+
   def deal_random_card(self):
     """If cur_player == CHANCE_PLAYER_ID, make a random card-deal move."""
     lib.StateDealCard(self._state)
@@ -660,8 +668,12 @@ class HanabiState(object):
   def legal_moves(self):
     """Returns list of legal moves for currently acting player."""
     # MB: Work was needed to allow Return to be a valid move here.
-    # MB: More work will be needed to make sure Agents don't think it's a valid move
     moves = []
+
+    # MB: Don't want to return any legal_moves from a terminal state
+    if self.is_terminal():
+      return moves
+
     c_movelist = lib.StateLegalMoves(self._state)
     num_moves = lib.NumMoves(c_movelist)
     for i in range(num_moves):

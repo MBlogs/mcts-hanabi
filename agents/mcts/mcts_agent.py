@@ -19,9 +19,9 @@ class MCTSAgent(Agent):
     self.root_node = None
     self.root_state = None
     # MB: Nodes hashed by moves to get there
-    self.exploration_weight = 0.1
-    self.rollout_num = 100
-    self.max_simulation_steps = 2
+    self.exploration_weight = 2.5
+    self.rollout_num = 50
+    self.max_simulation_steps = 4
     # Dictionary of lists of nodes
     self.children = dict()
     self.Q = defaultdict(int)
@@ -29,7 +29,7 @@ class MCTSAgent(Agent):
     self.agents = [RuleBasedAgent(config), RuleBasedAgent(config), RuleBasedAgent(config)]
 
   def act(self, observation, state):
-    debug = True
+    debug = False
     if observation['current_player_offset'] != 0:
       return None
 
@@ -42,38 +42,49 @@ class MCTSAgent(Agent):
     for r in range(self.rollout_num):
       if debug: print(f" ################ START MCTS ROLLOUT: {r} ############## ")
       # Reset state of root node and environment
-      self.root_node.state = self.root_state.copy()
+      self.root_node.focused_state = self.root_state.copy()
       # Master determinisation
-      self.root_node.state.replace_hand()
-      self.environment.state = self.root_node.state
-      print("MB: Player {} replaced hand".format(self.environment.state.cur_player()))
+      self.root_node.focused_state.replace_hand()
+      self.environment.state = self.root_node.focused_state
+      if debug: print("MB: Player {} replaced hand".format(self.environment.state.cur_player()))
       reward = self._do_rollout(self.root_node)
       if debug:
         print(f"MB: mcts_agent.act: Tree looks like {self._get_tree_string()}")
         print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
         print(f" ############### END MCTS ROLLOUT: {r} ################# \n")
+        if r % 10 == 0:
+          print(f"mcts_agent.act completed {r} rollouts")
 
     if debug:
       print("\n\n ################################################## ")
       print(" ################ END MCTS FORWARD MODEL ROLLOUTS ################## \n\n")
 
-    # Now at the end of training, so choose best
+
+    # Now at the end of training
+    self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     return best_node.initial_move()
 
 
   def _do_rollout(self, node):
-    debug = True
+    debug = False
 
     # Select the path through tree and expansion node
     path = self._select(node)
     leaf = path[-1]
+    if debug: print(f"MB: mcts_agent._do_rollout: Leaf node to roll out from is {leaf}")
 
     # Assign the focused_state of the node (if possible)
     for move in leaf.moves:
       if not any(move == legal_move for legal_move in self.environment.state.legal_moves()):
         if debug: print(f"MB: mcts_agent._do_rollout: move {move} not valid for this determinisation")
-        return -1
+
+        # MB: If can't reach node on this determinisation, return the reward when reaching here
+        # MB: Hopefully de-incetivises paths that are less likely to be the case
+        reward = self.environment.state.reward()
+        self._backpropagate(path, reward)
+        return reward
+      if debug: print(f"mcts_agent._do_rollout: Trying to step move: {move}")
       observations, reward, done, unused_info = self.environment.step(move)
 
     leaf.focused_state = self.environment.state
@@ -125,13 +136,14 @@ class MCTSAgent(Agent):
 
   def _simulate(self, node):
     "MB: Returns the reward for a random simulation (to completion) of `node`"
-    debug = True
+    debug = False
 
     # MB: Note: The nodes state needs to be copied and determinized/sound by here
     self.environment.state = node.focused_state
     observations = self.environment._make_observation_all_players()
 
-    done = False
+    done = node.is_terminal()
+    reward = node.focused_state.reward()
     steps = 0
     while not done:
       for agent_id, agent in enumerate(self.agents):
@@ -139,11 +151,12 @@ class MCTSAgent(Agent):
         if observation['current_player'] == agent_id:
           current_player_action = agent.act(observation)
           if debug: print(f"MB: mcts_agent.rollout_game: Agent {agent_id} completed action {current_player_action}")
-
       observations, reward, done, unused_info = self.environment.step(current_player_action)
       steps += 1
-      if not done: done = steps > self.max_simulation_steps
-    return reward / 25.0
+      if not done:
+        done = steps >= self.max_simulation_steps
+
+    return reward
 
 
   def _backpropagate(self, path, reward):
@@ -179,56 +192,3 @@ class MCTSAgent(Agent):
     for node, children in self.children.items():
       tree_string += f"[{node}: {self.N[node]}, {self.Q[node]}] "
     return tree_string
-
-
-  def old_act(self, observation, state):
-    """MB: Act based on an observation. """
-    debug = True
-    if observation['current_player_offset'] != 0:
-      return None
-    if debug: print("MB: mcts_agent.act: Deciding MCTS action")
-
-    self.root_state = state
-    self.rollout_game()
-
-    if debug: print(" ################################################## ")
-    if debug: print(" ############### END MCTS ROLLOUT ################# \n\n")
-    # Determinize: Sample our cards, create perfect information state.
-    # Need to then create that state for our own HanabiEnvironment
-    return self.agents[0].act(observation)
-
-
-  def rollout_game(self):
-    debug = True
-    # MB: Hack, access the protected method
-    if debug:
-      print("\n\n ##################################################  ")
-      print(" ################ START MCTS ROLLOUT ############## ")
-    # MB: Test not copying
-    self.environment.state = self.root_state.copy()
-    # if debug: print(f"MB: mcts_agent.rollout_game: Copied state fireworks is: {self.environment.state.fireworks()}")
-    # The observations are the thing that messes it up
-    observations = self.environment._make_observation_all_players()
-    # if debug: print(f"MB: Copied state. The new state after observation {self.environment.state}")
-    # if debug: print(f"MB: mcts_agent.rollout_game: At start example observation: \n{observations['player_observations'][0]}\n")
-    # if debug: print(f"MB: mcts_agent.rollout_game: fireworks are: {self.environment.state.fireworks()}")
-    done = False
-    while not done:
-      for agent_id, agent in enumerate(self.agents):
-        observation = observations['player_observations'][agent_id]
-        action = agent.act(observation)
-        if observation['current_player'] == agent_id:
-          assert action is not None
-          if debug: print(f"MB: mcts_agent.rollout_game: Got agent {agent_id} action {action}")
-          current_player_action = action
-        else:
-          assert action is None
-      observations, reward, done, unused_info = self.environment.step(current_player_action)
-      # MB: for some reason, state has all 5 fireworks but observation only has 3.
-    print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
-
-
-'''
-1. How to reach a node state in _select when the actions to get there might not be compatible with new master determinisation?
-2. 
-'''

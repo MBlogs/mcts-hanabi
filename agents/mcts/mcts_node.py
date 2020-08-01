@@ -49,8 +49,12 @@ class MCTSNode(Node):
     "All possible successors of this board state"
     # MB: States are determined by the moves to get there
     # MB: So this is technically only one version of possible children
-    # Node needs a focused state to get next possible moves from
+    # MB: Node needs a focused state to get next possible moves from
     assert self.focused_state is not None
+    if self.is_terminal():
+      # print("MB: mcts_node.find_cildren: was called on terminal state. Returning empty")
+      return []
+
     children = [MCTSNode(self.moves + (move,)) for move in self.focused_state.legal_moves()]
     return children
 

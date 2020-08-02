@@ -28,8 +28,7 @@ bool HanabiMove::operator==(const HanabiMove& other_move) const {
     case kDiscard:
       return CardIndex() == other_move.CardIndex();
      case kReturn:
-      //MB: Unsure if correct, just copied Discard
-      return CardIndex() == other_move.CardIndex();
+      return CardIndex() == other_move.CardIndex() && TargetOffset() == other_move.TargetOffset();
     case kRevealColor:
       return TargetOffset() == other_move.TargetOffset() &&
              Color() == other_move.Color();
@@ -49,6 +48,8 @@ std::string HanabiMove::ToString() const {
   switch (MoveType()) {
     case kPlay:
       return "(Play " + std::to_string(CardIndex()) + ")";
+    case kReturn:
+      return "(Return " +  std::to_string(CardIndex()) + "from Player "+std::to_string(TargetOffset())+")";
     case kDiscard:
       return "(Discard " + std::to_string(CardIndex()) + ")";
     case kRevealColor:

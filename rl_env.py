@@ -150,12 +150,7 @@ class HanabiEnv(Environment):
       self.state.deal_random_card()
 
     observation = self._make_observation_all_players()
-    # MB: Now it is on next player. Should be able to replace fine; will be precisely their own.
-    self.state.replace_hand()
-    if debug: print("rl_env.step: Player {} replaced hand".format(self.state.cur_player()))
     if debug: self.print_state()
-    # MB: Now make observation, as it includes the new hand now
-    observation = self._make_observation_all_players()
 
     # Reward is score differential. May be large and negative at game end.
     # reward = self.state.score() - last_score
@@ -245,7 +240,7 @@ class HanabiEnv(Environment):
         actions are supported:
           - { 'action_type': 'PLAY', 'card_index': int }
           - { 'action_type': 'DISCARD', 'card_index': int }
-          - {'action_type': 'RETURN;, 'card_index': int }
+          - {'action_type': 'RETURN;, 'card_index': int, 'player' int}
           - {
               'action_type': 'REVEAL_COLOR',
               'color': str,

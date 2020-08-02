@@ -20,7 +20,7 @@ class MCTSAgent(Agent):
     self.root_state = None
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
-    self.rollout_num = 5
+    self.rollout_num = 50
     self.max_simulation_steps = 2
     # Dictionary of lists of nodes
     self.children = dict()
@@ -47,7 +47,9 @@ class MCTSAgent(Agent):
       self.root_node.focused_state.replace_hand()
       self.environment.state = self.root_node.focused_state
       if debug: print("MB: Player {} replaced hand".format(self.environment.state.cur_player()))
+
       reward = self._do_rollout(self.root_node)
+
       if debug:
         print(f"MB: mcts_agent.act: Tree looks like {self._get_tree_string()}")
         print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
@@ -86,7 +88,10 @@ class MCTSAgent(Agent):
       observations, reward, done, unused_info = self.environment.step(move)
 
     leaf.focused_state = self.environment.state
+
     self._expand(leaf)
+
+    # Simulate from this point
     reward = self._simulate(leaf)
     self._backpropagate(path, reward)
     # Don't need to return reward but do it anyway

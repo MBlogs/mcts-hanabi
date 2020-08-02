@@ -231,7 +231,7 @@ bool HanabiState::MoveIsLegal(HanabiMove move) const {
       }
       break;
     case HanabiMove::kReturn:
-      if (move.CardIndex() >= hands_[cur_player_].Cards().size()) {
+      if (move.CardIndex() >= hands_[move.TargetOffset()].Cards().size()) {
         return false;
       }
       break;
@@ -310,12 +310,13 @@ void HanabiState::ApplyMove(HanabiMove move) {
       hands_[cur_player_].RemoveFromHand(move.CardIndex(), &discard_pile_);
       break;
     case HanabiMove::kReturn:
-      //MB: Hopefully we can just silently return from hand to deck. Note: Knowledge is NOT updated
-      history.color = hands_[cur_player_].Cards()[move.CardIndex()].Color();
-      history.rank = hands_[cur_player_].Cards()[move.CardIndex()].Rank();
-      deck_.ReturnCard(hands_[cur_player_].Cards()[move.CardIndex()].Color()
-                      ,hands_[cur_player_].Cards()[move.CardIndex()].Rank());
-      hands_[cur_player_].ReturnFromHand(move.CardIndex());
+      //MB: Return bastardises framework and uses TargetOffset to specify which hand to remove from
+      history.player = move.TargetOffset();
+      history.color = hands_[history.player].Cards()[move.CardIndex()].Color();
+      history.rank = hands_[history.player].Cards()[move.CardIndex()].Rank();
+      deck_.ReturnCard(hands_[history.player].Cards()[move.CardIndex()].Color()
+                      ,hands_[history.player].Cards()[move.CardIndex()].Rank());
+      hands_[history.player].ReturnFromHand(move.CardIndex());
       break;
     case HanabiMove::kPlay:
       history.color = hands_[cur_player_].Cards()[move.CardIndex()].Color();

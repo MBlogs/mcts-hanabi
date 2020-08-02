@@ -180,10 +180,10 @@ bool GetPlayMove(int card_index, pyhanabi_move_t* move) {
 }
 
 // MB: Added Move
-bool GetReturnMove(int card_index, pyhanabi_move_t* move) {
+bool GetReturnMove(int card_index,int player, pyhanabi_move_t* move) {
   REQUIRE(move != nullptr);
   move->move = new hanabi_learning_env::HanabiMove(
-      hanabi_learning_env::HanabiMove::kReturn, card_index, -1, -1, -1);
+      hanabi_learning_env::HanabiMove::kReturn, card_index, player, -1, -1);
   return move->move != nullptr;
 }
 

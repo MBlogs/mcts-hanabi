@@ -335,9 +335,9 @@ class HanabiMove(object):
     return HanabiMove(c_move)
 
   @staticmethod
-  def get_return_move(card_index):
+  def get_return_move(card_index, player):
     c_move = ffi.new("pyhanabi_move_t*")
-    assert lib.GetReturnMove(card_index, c_move)
+    assert lib.GetReturnMove(card_index, player, c_move)
     return HanabiMove(c_move)
 
   @staticmethod
@@ -785,7 +785,7 @@ class HanabiState(object):
       valid_card = self.valid_card(player, card_index)
       if debug: print("MB: replace_hand will replace {} with {} for player {}".format(self.player_hands()[player][card_index],valid_card,player))
       assert valid_card is not None # MB: This is where it could slip up; intra-hand conflict
-      return_move = HanabiMove.get_return_move(card_index=card_index)
+      return_move = HanabiMove.get_return_move(card_index=card_index, player = player)
       self.apply_move(return_move)
       if debug: print("MB: replace_hand passed return move")
       # Check where this is dealt to
@@ -801,27 +801,26 @@ class HanabiState(object):
     """
     debug = True
 
-    card_index = 0
-    for remember_card_index in range(len(remember_hand)):
-      # card_index is current hand iterator (maxes at 3 OR 4)
-      # remember_card_index is remember hand iterator (always maxes at 4)
-
-      # If that card was played/discarded, move to the next
-      if remember_card_index == removed_card_index:
-        continue
-
+    # Start by returning all cards to deck (resolves intra-hand conflict)
+    for card_index in range(len(self.player_hands()[player])):
       # Return the card in their current position (return will always be the oldest card
-      return_move = HanabiMove.get_return_move(card_index=card_index)
-      if debug: print(f"pyhanabi.Player {player} returning card {self.player_hands()[player][card_index]}")
+      return_move = HanabiMove.get_return_move(card_index=0, player=player)
+      if debug: print(f"pyhanabi.Player {player} returning card index: {self.player_hands()[player][0]}")
       self.apply_move(return_move)
       if debug: print(f"pyhanabi.Player {player} hand now {self.player_hands()[player]}")
 
-      # Deal back the card they had before
+    # Then deal back all cards
+    card_index = 0
+
+    for remember_card_index in range(len(remember_hand)):
+      # card_index is current hand iterator (maxes at 3 OR 4)
+      # remember_card_index is remember hand iterator (always maxes at 4)
+      if remember_card_index == removed_card_index:
+        continue
       card = remember_hand[remember_card_index]
       deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, card.color(), card.rank())
       if debug: print(f"pyhanabi.Player {player} restoring card {card}")
       self.apply_move(deal_specific_move)
-
       card_index += 1
 
 

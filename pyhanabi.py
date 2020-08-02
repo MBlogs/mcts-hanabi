@@ -801,6 +801,8 @@ class HanabiState(object):
     """
     debug = True
 
+    # ToDo: Need to adjust ordering here so vaid_cards can be called successfully
+
     # Start by returning all cards to deck (resolves intra-hand conflict)
     for card_index in range(len(self.player_hands()[player])):
       # Return the card in their current position (return will always be the oldest card
@@ -817,8 +819,14 @@ class HanabiState(object):
       # remember_card_index is remember hand iterator (always maxes at 4)
       if remember_card_index == removed_card_index:
         continue
+
+      # Check if card is valid still for this position. If it isn't fill in with random other valid card
       card = remember_hand[remember_card_index]
+      if not any(card == c for c in self.valid_cards(player, card_index)):
+        card = self.valid_card(player, card_index)
+
       deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, card.color(), card.rank())
+
       if debug: print(f"pyhanabi.Player {player} restoring card {card}")
       self.apply_move(deal_specific_move)
       card_index += 1

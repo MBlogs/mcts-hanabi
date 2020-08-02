@@ -111,7 +111,8 @@ class HanabiEnv(Environment):
     Returns:
       A list of integer dimensions describing the observation shape.
     """
-    return self.observation_encoder.shape()
+    # MB: Edits made to allow RIS-MCTS broke observation encoding
+    # return self.observation_encoder.shape()
 
   def num_moves(self):
     """Returns the total number of moves in this game (legal or not).
@@ -122,7 +123,7 @@ class HanabiEnv(Environment):
     return self.game.max_moves()
 
   def step(self, action):
-    debug = False
+    debug = True
 
     if isinstance(action, dict):
       # Convert dict action HanabiMove
@@ -138,20 +139,20 @@ class HanabiEnv(Environment):
     last_score = self.state.score()
 
     # Apply the action to the state
-    if debug: print(f"MB: rl_env.step: Player {self.state.cur_player()} applying action {action}")
+    if debug: print(f"rl_env.step: Player {self.state.cur_player()} applying action {action}")
     self.state.apply_move(action)
     # if debug: print("MB: Applied the action")
     done = self.state.is_terminal()
 
     # MB: Deals with standard scenario if player need another card
     while self.state.cur_player() == pyhanabi.CHANCE_PLAYER_ID:
-      if debug: print("MB: Dealing random card")
+      if debug: print("rl_env.step: Dealing random card")
       self.state.deal_random_card()
 
     observation = self._make_observation_all_players()
     # MB: Now it is on next player. Should be able to replace fine; will be precisely their own.
     self.state.replace_hand()
-    if debug: print("MB: Player {} replaced hand".format(self.state.cur_player()))
+    if debug: print("rl_env.step: Player {} replaced hand".format(self.state.cur_player()))
     if debug: self.print_state()
     # MB: Now make observation, as it includes the new hand now
     observation = self._make_observation_all_players()
@@ -268,7 +269,6 @@ class HanabiEnv(Environment):
     action_type = action["action_type"]
     assert (action_type in MOVE_TYPES), (
         "action_type: {} should be one of: {}".format(action_type, MOVE_TYPES))
-
     if action_type == "PLAY":
       card_index = action["card_index"]
       move = pyhanabi.HanabiMove.get_play_move(card_index=card_index)
@@ -277,7 +277,8 @@ class HanabiEnv(Environment):
       move = pyhanabi.HanabiMove.get_discard_move(card_index=card_index)
     elif action_type == "RETURN":
       card_index = action["card_index"]
-      move = pyhanabi.HanabiMove.get_return_move(card_index=card_index)
+      player = action["player"]
+      move = pyhanabi.HanabiMove.get_return_move(card_index=card_index, player=player)
     elif action_type == "REVEAL_RANK":
       target_offset = action["target_offset"]
       rank = action["rank"]
@@ -292,8 +293,7 @@ class HanabiEnv(Environment):
     else:
       raise ValueError("Unknown action_type: {}".format(action_type))
 
-    # MB: Make sure an Agent never thinks Return is a valid move though
-    # MB: Hack for now. Skip the check if RETURN and see what happens
+    # MB: HAck to skip RETURN move step
     if action_type != "RETURN":
       legal_moves = self.state.legal_moves()
       assert (str(move) in map(
@@ -398,29 +398,7 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
 
 
 class Agent(object):
-  """Agent interface.
-
-  All concrete implementations of an Agent should derive from this interface
-  and implement the method stubs.
-
-
-  ```python
-
-  class MyAgent(Agent):
-    ...
-
-  agents = [MyAgent(config) for _ in range(players)]
-  while not done:
-    ...
-    for agent_id, agent in enumerate(agents):
-      action = agent.act(observation)
-      if obs.current_player == agent_id:
-        assert action is not None
-      else
-        assert action is None
-    ...
-  ```
-  """
+  """Agent interface."""
 
   def __init__(self, config, *args, **kwargs):
     r"""Initialize the agent.

@@ -17,17 +17,23 @@ class Runner(object):
   def __init__(self, flags):
     """Initialize runner."""
     self.flags = flags
-    self.agent_config = {'players': flags['players']}
+    self.agent_config = {'players': flags['players'], 'player_id':0} #player_id changes per Agent
     self.environment = rl_env.make('Hanabi-Full', num_players=flags['players'])
     self.agent_classes = [AGENT_CLASSES[agent_class] for agent_class in flags['agent_classes']]
 
   def run(self):
     """Run episodes."""
     rewards = []
+
     for episode in range(flags['num_episodes']):
       observations = self.environment.reset()
-      # MB: Allow parsing of different Agents.
-      agents = [agent_class(self.agent_config) for agent_class in self.agent_classes]
+
+      # MB: Pass absolute player_id upfront to all agents (MCTS needs this for forward model)
+      agents = []
+      for i in range(len(self.agent_classes)):
+        self.agent_config.update({'player_id': i})
+        agents.append(self.agent_classes[i](self.agent_config))
+
       done = False
       episode_reward = 0
       while not done:
@@ -67,7 +73,7 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 5, 'agent_classes': ['RuleBasedAgent', 'RuleBasedAgent', 'MCTSAgent']}
+  flags = {'players': 3, 'num_episodes': 1, 'agent_classes': ['RuleBasedAgent', 'RuleBasedAgent', 'MCTSAgent']}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

@@ -1,10 +1,10 @@
 # MB Agent created during testing
-import rl_env
 from rl_env import Agent
 from collections import defaultdict
 import math
 from agents.rule_based_agent import RuleBasedAgent
 from agents.mcts.mcts_node import MCTSNode
+from agents.mcts import mcts_env
 
 AGENT_CLASSES = {'RuleBasedAgent':RuleBasedAgent}
 
@@ -14,14 +14,14 @@ class MCTSAgent(Agent):
   def __init__(self, config, **kwargs):
     """Initialize the agent."""
     # ToDo: Needs to know all HanabiEnv parameters
-    self.environment = rl_env.make('Hanabi-Full', num_players=config["players"])
+    self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player = config['player_id'])
     self.max_information_tokens = config.get('information_tokens', 8)
     self.root_node = None
     self.root_state = None
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
-    self.rollout_num = 50
-    self.max_simulation_steps = 4
+    self.rollout_num = 5
+    self.max_simulation_steps = 2
     # Dictionary of lists of nodes
     self.children = dict()
     self.Q = defaultdict(int)
@@ -29,7 +29,7 @@ class MCTSAgent(Agent):
     self.agents = [RuleBasedAgent(config), RuleBasedAgent(config), RuleBasedAgent(config)]
 
   def act(self, observation, state):
-    debug = False
+    debug = True
     if observation['current_player_offset'] != 0:
       return None
 
@@ -54,11 +54,9 @@ class MCTSAgent(Agent):
         print(f" ############### END MCTS ROLLOUT: {r} ################# \n")
         if r % 10 == 0:
           print(f"mcts_agent.act completed {r} rollouts")
-
     if debug:
       print("\n\n ################################################## ")
       print(" ################ END MCTS FORWARD MODEL ROLLOUTS ################## \n\n")
-
 
     # Now at the end of training
     self.root_node.focused_state = self.root_state.copy()
@@ -178,7 +176,9 @@ class MCTSAgent(Agent):
       )
     return max(self.children[node], key=uct)
 
+
   def _reset(self, state):
+    self.player_id = state.cur_player()
     self.root_state = state.copy()
     self.root_node = MCTSNode(())
     self.children = dict()
@@ -186,6 +186,7 @@ class MCTSAgent(Agent):
     self.N = defaultdict(int)
     self.N[self.root_node] = 0
     self.Q[self.root_node] = 0
+
 
   def _get_tree_string(self):
     tree_string = ""

@@ -775,8 +775,9 @@ class HanabiState(object):
   def valid_card(self, player, card_index):
     return random.choice(self.valid_cards(player, card_index))
 
+
   def replace_hand(self):
-    """Redeterminise a player's hand based on valid permuation"""
+    """Redeterminise current player hand based on valid permutation"""
     debug = False
     player = self.cur_player()
     for card_index in range(len(self.player_hands()[player])):
@@ -786,11 +787,42 @@ class HanabiState(object):
       assert valid_card is not None # MB: This is where it could slip up; intra-hand conflict
       return_move = HanabiMove.get_return_move(card_index=card_index)
       self.apply_move(return_move)
-      #if debug: print("MB: replace_hand passed return move")
+      if debug: print("MB: replace_hand passed return move")
       # Check where this is dealt to
       deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, valid_card.color(), valid_card.rank())
       self.apply_move(deal_specific_move)
-      #if debug: print("MB: replace_hand successfully replaced that card")
+      if debug: print("MB: replace_hand successfully replaced that card")
+
+
+  def restore_hand(self, player, remember_hand, removed_card_index =-1):
+    """As best as possible, restore current player hand to the one passed in
+    remember_hand: Their hand before it was replaced on their turn
+    removed_card_index: This card was played or discarded. Used to skip over it.
+    """
+    debug = True
+
+    card_index = 0
+    for remember_card_index in range(len(remember_hand)):
+      # card_index is current hand iterator (maxes at 3 OR 4)
+      # remember_card_index is remember hand iterator (always maxes at 4)
+
+      # If that card was played/discarded, move to the next
+      if remember_card_index == removed_card_index:
+        continue
+
+      # Return the card in their current position (return will always be the oldest card
+      return_move = HanabiMove.get_return_move(card_index=card_index)
+      if debug: print(f"pyhanabi.Player {player} returning card {self.player_hands()[player][card_index]}")
+      self.apply_move(return_move)
+      if debug: print(f"pyhanabi.Player {player} hand now {self.player_hands()[player]}")
+
+      # Deal back the card they had before
+      card = remember_hand[remember_card_index]
+      deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, card.color(), card.rank())
+      if debug: print(f"pyhanabi.Player {player} restoring card {card}")
+      self.apply_move(deal_specific_move)
+
+      card_index += 1
 
 
 class HanabiDeck(object):
@@ -799,6 +831,7 @@ class HanabiDeck(object):
 
   def __init__(self):
     self.debug = False
+    # Hack to get around _game HanabiState issues
     self.num_ranks_ = 5
     self.num_colors_ = 5
     self.card_count_ = []  # Card count entries are number 0 - 3, how many of card_index index there are in deck

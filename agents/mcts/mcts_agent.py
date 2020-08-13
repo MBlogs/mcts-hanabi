@@ -41,12 +41,14 @@ class MCTSAgent(Agent):
 
     for r in range(self.rollout_num):
       if debug: print(f" ################ START MCTS ROLLOUT: {r} ############## ")
+      # PRint initial state
+      if debug: print(self.root_state)
       # Reset state of root node and environment
       self.root_node.focused_state = self.root_state.copy()
-      # Master determinisation
-      self.root_node.focused_state.replace_hand()
+      # Master determinisation of MCTS agent's hand
+      self.root_node.focused_state.replace_hand(self.player_id)
       self.environment.state = self.root_node.focused_state
-      if debug: print("MB: Player {} replaced hand".format(self.environment.state.cur_player()))
+      if debug: print("mcts_agent.act: Player {} replaced hand".format(self.environment.state.cur_player()))
 
       reward = self._do_rollout(self.root_node)
 

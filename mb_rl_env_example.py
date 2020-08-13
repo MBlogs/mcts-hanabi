@@ -73,7 +73,7 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 1, 'agent_classes': ['RuleBasedAgent', 'RuleBasedAgent', 'RuleBasedAgent']}
+  flags = {'players': 3, 'num_episodes': 1, 'agent_classes': ['RuleBasedAgent', 'RuleBasedAgent', 'MCTSAgent']}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',
@@ -83,12 +83,14 @@ if __name__ == "__main__":
              '--players       number of players in the game.\n'
              '--num_episodes  number of game episodes to run.\n'
              '--agent_class   {}'.format(' or '.join(AGENT_CLASSES.keys())))
-  # MB: Added check that the number of agent classes is equal to number of players
-  if len(flags['agent_classes']) != flags['players']:
-    sys.exit('Number of agent classes not same as number of players')
 
   for flag, value in options:
     flag = flag[2:]  # Strip leading --.
     flags[flag] = type(flags[flag])(value)
+
+    # MB: Added check that the number of agent classes is equal to number of players
+  if len(flags['agent_classes']) != flags['players']:
+    sys.exit('Number of agent classes not same as number of players')
+
   runner = Runner(flags)
   runner.run()

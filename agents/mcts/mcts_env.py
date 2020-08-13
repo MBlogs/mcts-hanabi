@@ -27,18 +27,21 @@ class MCTSEnv(HanabiEnv):
       raise ValueError("Expected action as dict or int, got: {}".format(
           action))
 
+    # If Play or Discard, make note of the card
+    actioned_card = None
+    if action.type() == pyhanabi.HanabiMoveType.DISCARD or action.type() == pyhanabi.HanabiMoveType.PLAY:
+      actioned_card = self.state.player_hands()[self.state.cur_player()][action.card_index()]
+
     # Apply the action
     if debug: print(f"MB: mcts_env.step: Player {self.state.cur_player()} applying action {action}")
     action_player = self.state.cur_player()
     self.state.apply_move(action)
 
-    # If acting player not me, restore as best as possible their hand, passing if a card was removed
+    # If acting player not me, restore as best as possible their hand
     if action_player != self.mcts_player:
-      if action.type() == pyhanabi.HanabiMoveType.DISCARD or action.type() == pyhanabi.HanabiMoveType.PLAY:
-        self.state.restore_hand(action_player, self.remember_hand, action.card_index())
-      else:
-        self.state.restore_hand(action_player, self.remember_hand)
-      if debug: print(f"mcts_env.step: Player {action_player} restored hand")
+      self.state.restore_hand(action_player, self.remember_hand, actioned_card, action.card_index())
+
+    if debug: print(f"mcts_env.step: Player {action_player} restored hand")
 
     # If cur_player is now chance, action player still needs a random card dealt
     while self.state.cur_player() == pyhanabi.CHANCE_PLAYER_ID:
@@ -48,7 +51,7 @@ class MCTSEnv(HanabiEnv):
     # Now for sure onto next player. If not me, remember then replace their hand
     if self.state.cur_player() != self.mcts_player:
       self.remember_hand = self.state.player_hands()[self.state.cur_player()]
-      self.state.replace_hand()
+      self.state.replace_hand(self.state.cur_player())
       if debug: print(f"mcts_env.step: Player {self.state.cur_player()} replaced hand")
 
     # Now make observation, as the hand is now re-determinised

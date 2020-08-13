@@ -776,10 +776,10 @@ class HanabiState(object):
     return random.choice(self.valid_cards(player, card_index))
 
 
-  def replace_hand(self):
-    """Redeterminise current player hand based on valid permutation"""
+  def replace_hand(self, player):
+    """Redeterminise a player hand based on valid permutation
+    Note: Originally this only allowed replacing of current player hand"""
     debug = False
-    player = self.cur_player()
     for card_index in range(len(self.player_hands()[player])):
       # MB: There is a possibility when redeterminising that the hand ends up no longer valid
       valid_card = self.valid_card(player, card_index)
@@ -794,7 +794,7 @@ class HanabiState(object):
       if debug: print("MB: replace_hand successfully replaced that card")
 
 
-  def restore_hand(self, player, remember_hand, removed_card_index =-1):
+  def restore_hand(self, player, remember_hand, removed_card = None, removed_card_index = -1):
     """As best as possible, restore current player hand to the one passed in
     remember_hand: Their hand before it was replaced on their turn
     removed_card_index: This card was played or discarded. Used to skip over it.
@@ -807,9 +807,9 @@ class HanabiState(object):
     for card_index in range(len(self.player_hands()[player])):
       # Return the card in their current position (return will always be the oldest card
       return_move = HanabiMove.get_return_move(card_index=0, player=player)
-      if debug: print(f"pyhanabi.Player {player} returning card index: {self.player_hands()[player][0]}")
+      if debug: print(f"pyhanabi.restore_hand: Player {player} returning card index: {self.player_hands()[player][0]}")
       self.apply_move(return_move)
-      if debug: print(f"pyhanabi.Player {player} hand now {self.player_hands()[player]}")
+      if debug: print(f"pyhanabi.restore_hand: Player {player} hand now {self.player_hands()[player]}")
 
     # Then deal back all cards
     card_index = 0
@@ -817,18 +817,25 @@ class HanabiState(object):
     for remember_card_index in range(len(remember_hand)):
       # card_index is current hand iterator (maxes at 3 OR 4)
       # remember_card_index is remember hand iterator (always maxes at 4)
+
+      # Assign card in remembered hand to return
+      card = remember_hand[remember_card_index]
+
+      # Skip over the remembered card if it was played
       if remember_card_index == removed_card_index:
+        if debug: print(f"pyhanabi.restore_hand: Player {player} skipped over restoring card {card}")
         continue
 
-      # Check if card is valid still for this position. If it isn't fill in with random other valid card
-      card = remember_hand[remember_card_index]
+      # Special case: If the actioned card was previously in their hand...
+      # Let new card be a
       if not any(card == c for c in self.valid_cards(player, card_index)):
-        card = self.valid_card(player, card_index)
+       card = self.valid_card(player, card_index)
+
 
       deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, card.color(), card.rank())
-
-      if debug: print(f"pyhanabi.Player {player} restoring card {card}")
+      if debug: print(f"pyhanabi.restore_hand: Player {player} restoring card {card}")
       self.apply_move(deal_specific_move)
+      if debug: print(f"pyhanabi.restore_hand: Player {player} hand now {self.player_hands()[player]}")
       card_index += 1
 
 

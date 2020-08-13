@@ -1,8 +1,8 @@
 numpy
-sklearn
-scipy
-matplotlib
-absl-py 
-gin-config 
+absl-py
 cffi
-tensorflow
+# gin-config
+# matplotlib
+# sklearn
+# scipy
+# tensorflow

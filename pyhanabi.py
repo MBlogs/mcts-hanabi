@@ -740,8 +740,8 @@ class HanabiState(object):
     """MB: Return list of HanabiCard that are a valid swap for the one questioned"""
     # Note: We know the state. For efficency and simplicity a direct GetDeck should have been implemented.
     # Then the only check needed is the card_knowledge check
-    debug = False
-    if debug: print("MB:  Replacing {}".format(self.player_hands()[player][card_index]))
+    debug = True
+    # if debug: print("MB:  Replacing {}".format(self.player_hands()[player][card_index]))
     self.deck.reset_deck()
 
     # MB: First run through discard pile
@@ -764,17 +764,17 @@ class HanabiState(object):
     if debug: print("MB: valid cards attempting to access card_index {}".format(card_index))
     # MB: Is it assured that card_knowledge()[0] is the right call here?
     # Yes because the observation was player based.So the first will be the same as player
+    if debug: print(f"pyhanabi.valid_cards: Card knowledge looks like {temp_observation.card_knowledge()[0]}")
     card_knowledge = temp_observation.card_knowledge()[0][card_index]
     if debug: print("MB: valid cards retrieved card_knowledge")
     self.deck.remove_by_card_knowledge(card_knowledge)
 
     # MB: Return list of remaining cards in the deck; the valid options
-    if debug: print("MB: Valid cards for player {} in position: {} are: {}".format(player,card_index,self.deck))
-    return self.deck.return_cards()
+    if debug: print("MB: Valid cards for player {} in position: {} are: {}".format(player, card_index, self.deck))
+    return self.deck.get_deck()
 
   def valid_card(self, player, card_index):
     return random.choice(self.valid_cards(player, card_index))
-
 
   def replace_hand(self, player):
     """Redeterminise a player hand based on valid permutation
@@ -909,7 +909,7 @@ class HanabiDeck(object):
     while self.card_count_[card_index] > 0:
       self.remove_card(color, rank)
 
-  def return_cards(self):
+  def get_deck(self):
     """MB: Return the deck as HanabiCard objects"""
     cards = []
     for color in range(self.num_colors_):
@@ -930,7 +930,7 @@ class HanabiDeck(object):
 
   def __str__(self):
     deck_string = ""
-    cards = self.return_cards()
+    cards = self.get_deck()
     for card in cards:
       deck_string += " {}".format(card)
     return deck_string

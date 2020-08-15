@@ -16,7 +16,7 @@ class MCTSEnv(HanabiEnv):
 
 
   def step(self, action):
-    debug = False
+    debug = True
 
     # Convert action into HanabiMove
     if isinstance(action, dict):
@@ -72,6 +72,7 @@ class MCTSEnv(HanabiEnv):
     """
     if self.state.end_of_game_status() == HanabiEndOfGameType.OUT_OF_LIFE_TOKENS:
       # Disincentivise rollouts that end game prematurely
+      print("mcts_env.reward: It's 0")
       return 0
     else:
       return self.fireworks_score()

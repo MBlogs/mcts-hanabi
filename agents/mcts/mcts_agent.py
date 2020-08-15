@@ -20,8 +20,8 @@ class MCTSAgent(Agent):
     self.root_state = None
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
-    self.rollout_num = 30
-    self.max_simulation_steps = 1
+    self.rollout_num = 50
+    self.max_simulation_steps = 2
     # Dictionary of lists of nodes
     self.children = dict()
     self.Q = defaultdict(int)
@@ -43,13 +43,12 @@ class MCTSAgent(Agent):
       if debug: print(f" ################ START MCTS ROLLOUT: {r} ############## ")
       # PRint initial state
       if debug: print(self.root_state)
-      # Reset state of root node and environment
-      self.root_node.focused_state = self.root_state.copy()
       # Master determinisation of MCTS agent's hand
-      self.environment.state = self.root_node.focused_state
+      self.environment.state = self.root_state.copy()
       self.environment.replace_hand(self.player_id)
       if debug: print("mcts_agent.act: Player {} did master determinisation".format(self.environment.state.cur_player()))
-      if debug: print(self.environment.state)
+      # Reset state of root node
+      self.root_node.focused_state = self.environment.state
       reward = self._do_rollout(self.root_node)
 
       if debug:
@@ -79,6 +78,7 @@ class MCTSAgent(Agent):
     if debug: print(f"MB: mcts_agent._do_rollout: Leaf node to roll out from is {leaf}")
 
     # Assign the focused_state of the node (if possible)
+    steps = 0
     for move in leaf.moves:
       if not any(move == legal_move for legal_move in self.environment.state.legal_moves()):
         if debug: print(f"MB: mcts_agent._do_rollout: move {move} not valid for this determinisation")
@@ -90,13 +90,14 @@ class MCTSAgent(Agent):
         return reward
       if debug: print(f"mcts_agent._do_rollout: Trying to step move: {move}")
       observations, reward, done, unused_info = self.environment.step(move)
+      steps += 1
 
     leaf.focused_state = self.environment.state
 
     self._expand(leaf)
 
     # Simulate from this point
-    reward = self._simulate(leaf)
+    reward = self._simulate(leaf, steps)
     self._backpropagate(path, reward)
     # Don't need to return reward but do it anyway
     return reward
@@ -141,9 +142,9 @@ class MCTSAgent(Agent):
     self.children[node] = node.find_children()
 
 
-  def _simulate(self, node):
+  def _simulate(self, node, steps):
     "MB: Returns the reward for a random simulation (to completion) of `node`"
-    debug = True
+    debug = False
 
     # MB: Note: The nodes state needs to be copied and determinized/sound by here
     self.environment.state = node.focused_state
@@ -151,7 +152,6 @@ class MCTSAgent(Agent):
 
     done = node.is_terminal()
     reward = self.environment.reward()
-    steps = 0
     while not done:
       for agent_id, agent in enumerate(self.agents):
         observation = observations['player_observations'][agent_id]

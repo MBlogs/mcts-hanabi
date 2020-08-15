@@ -2,6 +2,7 @@ import pyhanabi
 from rl_env import HanabiEnv
 from agents.mcts.mcts_determinizer import MCTSDeterminizer
 from pyhanabi import HanabiMove
+from pyhanabi import HanabiEndOfGameType
 import random
 
 
@@ -15,8 +16,6 @@ class MCTSEnv(HanabiEnv):
 
 
   def step(self, action):
-    # ToDo: Handle redeterminizing before first step called (1st case)
-    # Answer: That will never happen?
     debug = False
 
     # Convert action into HanabiMove
@@ -50,7 +49,7 @@ class MCTSEnv(HanabiEnv):
      self.restore_hand(action_player, self.remember_hand, actioned_card, action.card_index())
      if debug: print(f"mcts_env.step: Player {action_player} restored hand")
 
-    # Now we're onto the  next player. If not me, remember then replace their hand
+    # Now we're onto the  next player. If not me, remember, then replace their hand
     if self.state.cur_player() != self.mcts_player:
       if debug: print(f"mcts_env.step: Player {self.state.cur_player()} saving hand")
       self.remember_hand = self.state.player_hands()[self.state.cur_player()]
@@ -61,11 +60,21 @@ class MCTSEnv(HanabiEnv):
     observation = self._make_observation_all_players()
     if debug: self.print_state()
 
-    reward = self.state.reward()
+    reward = self.reward()
     done = self.state.is_terminal()
     info = {}
     return (observation, reward, done, info)
 
+
+  def reward(self):
+    """Custom reward function for use during RIS-MCTS rollouts
+    This is therefore not the same as the overall game score
+    """
+    if self.state.end_of_game_status() == HanabiEndOfGameType.OUT_OF_LIFE_TOKENS:
+      # Disincentivise rollouts that end game prematurely
+      return 0
+    else:
+      return self.fireworks_score()
 
   def return_hand(self,player):
     """Return all cards from a player's hand to the deck

@@ -23,11 +23,6 @@ class Node(ABC):
         return True
 
     @abstractmethod
-    def reward(self):
-        "Assumes `self` is terminal node. 1=win, 0=loss, .5=tie, etc"
-        return 0
-
-    @abstractmethod
     def __hash__(self):
         "Nodes must be hashable"
         return 123456789
@@ -70,11 +65,6 @@ class MCTSNode(Node):
   def initial_move(self):
     """MB: Returns first move to get to node (if this node is best)"""
     return self.moves[0]
-
-
-  def reward(self):
-    "Assumes `self` is terminal node. 1=win, 0=loss, .5=tie, etc"
-    return self.focused_state.fireworks_score()
 
   def __str__(self):
     return f"{self.moves}"

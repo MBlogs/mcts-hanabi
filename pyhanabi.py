@@ -620,12 +620,8 @@ class HanabiState(object):
     return score
 
   def reward(self):
-    # MB: How to handle early is_terminal?
-    #ToDO: Hacky
-    if self.is_terminal():
-      return 0
-    else:
-      return self.fireworks_score()
+    # This is the standard reward to use in rl_env
+    return self.fireworks_score()
 
   def deal_random_card(self):
     """If cur_player == CHANCE_PLAYER_ID, make a random card-deal move."""

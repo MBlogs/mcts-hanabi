@@ -29,7 +29,7 @@ class MCTSAgent(Agent):
     self.agents = [RuleBasedAgent(config), RuleBasedAgent(config), RuleBasedAgent(config)]
 
   def act(self, observation, state):
-    debug = False
+    debug = True
     if observation['current_player_offset'] != 0:
       return None
 
@@ -48,8 +48,8 @@ class MCTSAgent(Agent):
       # Master determinisation of MCTS agent's hand
       self.environment.state = self.root_node.focused_state
       self.environment.replace_hand(self.player_id)
-      if debug: print("mcts_agent.act: Player {} replaced hand".format(self.environment.state.cur_player()))
-
+      if debug: print("mcts_agent.act: Player {} did master determinisation".format(self.environment.state.cur_player()))
+      if debug: print(self.environment.state)
       reward = self._do_rollout(self.root_node)
 
       if debug:
@@ -63,6 +63,7 @@ class MCTSAgent(Agent):
       print(" ################ END MCTS FORWARD MODEL ROLLOUTS ################## \n\n")
 
     # Now at the end of training
+    print(f"MB: mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     return best_node.initial_move()
@@ -70,6 +71,7 @@ class MCTSAgent(Agent):
 
   def _do_rollout(self, node):
     debug = False
+    # Do rollout tries to roll the focused state according to the moves in the tree
 
     # Select the path through tree and expansion node
     path = self._select(node)
@@ -81,9 +83,9 @@ class MCTSAgent(Agent):
       if not any(move == legal_move for legal_move in self.environment.state.legal_moves()):
         if debug: print(f"MB: mcts_agent._do_rollout: move {move} not valid for this determinisation")
 
-        # MB: If can't reach node on this determinisation, return the reward when reaching here
+        # MB: If can't reach node on this determinisation, return 0 when reaching here
         # MB: Hopefully de-incetivises paths that are less likely to be the case
-        reward = self.environment.state.reward()
+        reward = 0
         self._backpropagate(path, reward)
         return reward
       if debug: print(f"mcts_agent._do_rollout: Trying to step move: {move}")
@@ -141,14 +143,14 @@ class MCTSAgent(Agent):
 
   def _simulate(self, node):
     "MB: Returns the reward for a random simulation (to completion) of `node`"
-    debug = False
+    debug = True
 
     # MB: Note: The nodes state needs to be copied and determinized/sound by here
     self.environment.state = node.focused_state
     observations = self.environment._make_observation_all_players()
 
     done = node.is_terminal()
-    reward = node.focused_state.reward()
+    reward = self.environment.reward()
     steps = 0
     while not done:
       for agent_id, agent in enumerate(self.agents):

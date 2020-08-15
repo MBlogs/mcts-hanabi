@@ -46,8 +46,8 @@ class MCTSAgent(Agent):
       # Reset state of root node and environment
       self.root_node.focused_state = self.root_state.copy()
       # Master determinisation of MCTS agent's hand
-      self.root_node.focused_state.replace_hand(self.player_id)
       self.environment.state = self.root_node.focused_state
+      self.environment.replace_hand(self.player_id)
       if debug: print("mcts_agent.act: Player {} replaced hand".format(self.environment.state.cur_player()))
 
       reward = self._do_rollout(self.root_node)

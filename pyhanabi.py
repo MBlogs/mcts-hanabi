@@ -341,9 +341,9 @@ class HanabiMove(object):
     return HanabiMove(c_move)
 
   @staticmethod
-  def get_deal_specific_move(card_index, player, color, rank, destroy_knowledge=False):
+  def get_deal_specific_move(card_index, player, color, rank):
     c_move = ffi.new("pyhanabi_move_t*")
-    assert lib.GetDealSpecificMove(card_index, player, color, rank, destroy_knowledge, c_move)
+    assert lib.GetDealSpecificMove(card_index, player, color, rank, c_move)
     return HanabiMove(c_move)
 
   @staticmethod
@@ -637,6 +637,10 @@ class HanabiState(object):
     assert self.cur_player() == CHANCE_PLAYER_ID
     move = HanabiMove.get_deal_specific_move(color, rank, card_index)
     self.apply_move(move)
+
+  def remove_knowledge(self, player, card_index):
+    """Need ability to independently remove card_knowledge"""
+    lib.StateRemoveKnowledge(self._state, player, card_index)
 
   def player_hands(self):
     """Returns a list of all hands, with cards ordered oldest to newest."""

@@ -115,6 +115,7 @@ void CopyState(const pyhanabi_state_t* src, pyhanabi_state_t* dest);
 void DeleteState(pyhanabi_state_t* state);
 const void* StateParentGame(pyhanabi_state_t* state);
 void StateApplyMove(pyhanabi_state_t* state, pyhanabi_move_t* move);
+void StateRemoveKnowledge(pyhanabi_state_t* state, int pid, int index);
 int StateCurPlayer(pyhanabi_state_t* state);
 void StateDealCard(pyhanabi_state_t* state);
 int StateDeckSize(pyhanabi_state_t* state);

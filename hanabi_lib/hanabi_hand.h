@@ -109,6 +109,8 @@ class HanabiHand {
   void RemoveFromHand(int card_index, std::vector<HanabiCard>* discard_pile);
   // MB: Remove card_index card from hand and put back in deck. Deck might not be able to access like this.
   void ReturnFromHand(int card_index);
+  // Remove knowledge seperately
+  void RemoveKnowledge(int card_index, const CardKnowledge& initial_knowledge);
   // Make cards with the given rank visible.
   // Returns new information bitmask, bit_i set if card_i color was revealed
   // and was previously unknown.

@@ -6,13 +6,17 @@ class MCTSDeterminizer(object):
   def __init__(self):
     self.deck = HanabiDeck()
 
-  def valid_card(self, player, card_index, player_hands, discard_pile
-                 , fireworks, card_knowledge, additional_cards=[]):
-    return random.choice(self.valid_cards(player, card_index, player_hands, discard_pile
-                                          , fireworks, card_knowledge, additional_cards))
+  def valid_card(self, player, card_index, player_hands, discard_pile, fireworks
+                 , card_knowledge=None, additional_cards=[]):
+    valid_cards = self.valid_cards(player, card_index, player_hands, discard_pile, fireworks
+                                          , card_knowledge, additional_cards)
+    if valid_cards:
+      return random.choice(valid_cards)
+    else:
+      return None
 
-  def valid_cards(self, player, card_index, player_hands, discard_pile
-                  , fireworks, card_knowledge, additional_cards=[], ignore_knowledge=False):
+  def valid_cards(self, player, card_index, player_hands, discard_pile,fireworks
+                  , card_knowledge=None, additional_cards=[]):
     """MB: Return list of HanabiCard that are a valid swap for the one questioned"""
     # Note: We know the state. For efficency and simplicity a direct GetDeck should have been implemented.
     # Then the only check needed is the card_knowledge check

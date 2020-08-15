@@ -125,6 +125,13 @@ HanabiState::HanabiState(const HanabiGame* parent_game, int start_player)
       fireworks_(parent_game->NumColors(), 0),
       turns_to_play_(parent_game->NumPlayers()) {}
 
+void HanabiState::RemoveKnowledge(int player, int card_index) {
+    // MB: Define the default card knowledge structure
+    HanabiHand::CardKnowledge card_knowledge(ParentGame()->NumColors(),
+                                      ParentGame()->NumRanks());
+    hands_[player].RemoveKnowledge(card_index, card_knowledge);
+}
+
 void HanabiState::AdvanceToNextPlayer(bool stayOnPlayer) {
   // MB: RETURN: Sets to CHANCE
   // MB: DEAL_SPECIFIC: Needs to allow STAYING on current player. hence the boolean option

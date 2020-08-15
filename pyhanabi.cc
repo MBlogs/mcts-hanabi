@@ -346,6 +346,12 @@ void StateApplyMove(pyhanabi_state_t* state, pyhanabi_move_t* move) {
   hanabi_state->ApplyMove(*hanabi_move);
 }
 
+void StateRemoveKnowledge(pyhanabi_state_t* state, int player, int card_index){
+    auto hanabi_state =
+      reinterpret_cast<hanabi_learning_env::HanabiState*>(state->state);
+    hanabi_state->RemoveKnowledge(player, card_index);
+}
+
 int StateCurPlayer(pyhanabi_state_t* state) {
   REQUIRE(state != nullptr);
   REQUIRE(state->state != nullptr);

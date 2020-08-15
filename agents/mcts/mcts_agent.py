@@ -20,8 +20,8 @@ class MCTSAgent(Agent):
     self.root_state = None
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
-    self.rollout_num = 50
-    self.max_simulation_steps = 2
+    self.rollout_num = 30
+    self.max_simulation_steps = 1
     # Dictionary of lists of nodes
     self.children = dict()
     self.Q = defaultdict(int)
@@ -29,7 +29,7 @@ class MCTSAgent(Agent):
     self.agents = [RuleBasedAgent(config), RuleBasedAgent(config), RuleBasedAgent(config)]
 
   def act(self, observation, state):
-    debug = True
+    debug = False
     if observation['current_player_offset'] != 0:
       return None
 

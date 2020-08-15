@@ -85,6 +85,7 @@ class HanabiState {
   bool ChanceOutcomeIsLegal(HanabiMove move) const { return MoveIsLegal(move); }
   double ChanceOutcomeProb(HanabiMove move) const;
   void ApplyChanceOutcome(HanabiMove move) { ApplyMove(move); }
+  void RemoveKnowledge(int player, int card_index);
   void ApplyRandomChance();
   // Get the valid chance moves, and associated probabilities.
   // Guaranteed that moves.size() == probabilities.size().
@@ -98,6 +99,7 @@ class HanabiState {
   int CurPlayer() const { return cur_player_; }
   int LifeTokens() const { return life_tokens_; }
   int InformationTokens() const { return information_tokens_; }
+
   const std::vector<HanabiHand>& Hands() const { return hands_; }
   const std::vector<int>& Fireworks() const { return fireworks_; }
   const HanabiGame* ParentGame() const { return parent_game_; }

@@ -6,10 +6,13 @@ class MCTSDeterminizer(object):
   def __init__(self):
     self.deck = HanabiDeck()
 
-  def valid_card(self, player, card_index, player_hands, discard_pile, fireworks, card_knowledge):
-    return random.choice(self.valid_cards(player, card_index, player_hands, discard_pile, fireworks, card_knowledge))
+  def valid_card(self, player, card_index, player_hands, discard_pile
+                 , fireworks, card_knowledge, additional_cards=[]):
+    return random.choice(self.valid_cards(player, card_index, player_hands, discard_pile
+                                          , fireworks, card_knowledge, additional_cards))
 
-  def valid_cards(self, player, card_index, player_hands, discard_pile, fireworks, card_knowledge):
+  def valid_cards(self, player, card_index, player_hands, discard_pile
+                  , fireworks, card_knowledge, additional_cards=[], ignore_knowledge=False):
     """MB: Return list of HanabiCard that are a valid swap for the one questioned"""
     # Note: We know the state. For efficency and simplicity a direct GetDeck should have been implemented.
     # Then the only check needed is the card_knowledge check
@@ -30,8 +33,12 @@ class MCTSDeterminizer(object):
     self.deck.remove_by_fireworks(fireworks)
     if debug: print("MB: valid cards after fireworks: {}".format(self.deck))
 
-    # MB: Finally use card knowledge player has about own hand from hints
-    self.deck.remove_by_card_knowledge(card_knowledge[card_index])
+    self.deck.remove_by_cards(additional_cards)
+    if debug: print("MB: valid cards after additiona: {}".format(self.deck))
+
+    # MB: Use card knowledge player has about own hand from hints
+    if card_knowledge is not None:
+      self.deck.remove_by_card_knowledge(card_knowledge[card_index])
 
     # MB: Return list of remaining cards in the deck; the valid options
     if debug: print("MB: Valid cards for player {} in position: {} are: {}".format(player, card_index, self.deck))
@@ -77,6 +84,11 @@ class HanabiDeck(object):
       for rank in range(self.num_ranks_):
         if not (card_knowledge.color_plausible(color) and card_knowledge.rank_plausible(rank)):
           self.remove_all_card(color, rank)
+
+  def remove_by_cards(self, cards):
+    """MB: Remove cards from deck that appear in cards list"""
+    for card in cards:
+      self.remove_card(card.color(), card.rank())
 
   def remove_by_hands(self, player, card_index, hands):
     for other_player in range(len(hands)):

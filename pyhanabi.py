@@ -341,9 +341,9 @@ class HanabiMove(object):
     return HanabiMove(c_move)
 
   @staticmethod
-  def get_deal_specific_move(card_index, player, color, rank):
+  def get_deal_specific_move(card_index, player, color, rank, destroy_knowledge=False):
     c_move = ffi.new("pyhanabi_move_t*")
-    assert lib.GetDealSpecificMove(card_index, player, color, rank, c_move)
+    assert lib.GetDealSpecificMove(card_index, player, color, rank, destroy_knowledge, c_move)
     return HanabiMove(c_move)
 
   @staticmethod

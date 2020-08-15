@@ -2,6 +2,7 @@ import pyhanabi
 from rl_env import HanabiEnv
 from agents.mcts.mcts_determinizer import MCTSDeterminizer
 from pyhanabi import HanabiMove
+import random
 
 
 class MCTSEnv(HanabiEnv):
@@ -39,23 +40,24 @@ class MCTSEnv(HanabiEnv):
     if debug: print(f"MB: mcts_env.step: Player {self.state.cur_player()} applying action {action}")
     self.state.apply_move(action)
 
-    # If acting player not me, restore as best as possible their hand
-    #if action_player != self.mcts_player:
-    #  self.state.restore_hand(action_player, self.remember_hand, actioned_card, action.card_index())
-    #  if debug: print(f"mcts_env.step: Player {action_player} restored hand")
-
-    # If cur_player is now chance, action player still needs a random card dealt
+    # If cur_player is now chance, player needs a random card dealt (KEEP)
     while self.state.cur_player() == pyhanabi.CHANCE_PLAYER_ID:
       self.state.deal_random_card()
-      if debug: print(f"mcts_env.step: Player {self.state.cur_player()} dealt random card")
+      if debug: print(f"mcts_env.step: Player {action_player} dealt random card")
 
-    # Now for sure onto next player. If not me, remember then replace their hand
+    # If the acting player was not me, restore as best as possible their hand
+    if action_player != self.mcts_player:
+     self.restore_hand(action_player, self.remember_hand, actioned_card, action.card_index())
+     if debug: print(f"mcts_env.step: Player {action_player} restored hand")
+
+    # Now we're onto the  next player. If not me, remember then replace their hand
     if self.state.cur_player() != self.mcts_player:
+      if debug: print(f"mcts_env.step: Player {self.state.cur_player()} saving hand")
       self.remember_hand = self.state.player_hands()[self.state.cur_player()]
       self.replace_hand(self.state.cur_player())
       if debug: print(f"mcts_env.step: Player {self.state.cur_player()} replaced hand")
 
-    # Now make observation, as the hand is now re-determinised
+    # Now make observation, as action player hand is restored and new player hand is redeterminised
     observation = self._make_observation_all_players()
     if debug: self.print_state()
 
@@ -65,41 +67,76 @@ class MCTSEnv(HanabiEnv):
     return (observation, reward, done, info)
 
 
-  def restore_hand(self, player, remember_hand, removed_card=None, removed_card_index=-1):
+  def restore_hand(self, player, remember_hand, removed_card=None, removed_card_index = -1):
     """As best as possible, restore current player hand to the one passed in
     remember_hand: Their hand before it was replaced on their turn
     removed_card_index: This card was played or discarded. Used to skip over it.
     """
     debug = True
-
-    # Work out card knowledge upfront
+    # Source card knowledge upfront
     temp_observation = self.state.observation(player)
     card_knowledge = temp_observation.card_knowledge()[0]
-
-    # ToDo: Need to adjust ordering here so vaid_cards can be called successfully
+    # Note size of hand in case we need to deal a random
+    hand_size = len(self.state.player_hands()[player])
+    destroy_knowledge = False
 
     # Start by returning all cards to deck (resolves intra-hand conflict)
-    for card_index in range(len(self.state.player_hands()[player])):
-      # Return the card in their current position (return will always be the oldest card
+    for card_index in range(hand_size):
+      # Return the card in their current position (return will always be the oldest card)
       return_move = HanabiMove.get_return_move(card_index=0, player=player)
-      if debug: print(f"pyhanabi.restore_hand: Player {player} returning card index: {self.state.player_hands()[player][0]}")
+      if debug: print(f"mcts_env.restore_hand: Player {player} returning card: {self.state.player_hands()[player][0]}")
       self.state.apply_move(return_move)
-      if debug: print(f"pyhanabi.restore_hand: Player {player} hand now {self.state.player_hands()[player]}")
+      if debug: print(f"mcts_env.restore_hand: Player {player} hand now {self.state.player_hands()[player]}")
 
-    # Then deal back all cards
     card_index = 0
 
     for remember_card_index in range(len(remember_hand)):
-      # card_index is current hand iterator (maxes at 3 OR 4)
-      # remember_card_index is remember hand iterator (always maxes at 4)
+      # Note: Have to iterate over remembered hand here; could have gone 5 > 4
+      # Reember card index iterates over remembered hand
+      # card_index iterates over restored hand
 
-      # Assign card in remembered hand to return
+      # Skip over the remembered card if it was the one played.
+      if remember_card_index == removed_card_index:
+        continue
+
+      # Assign card in remembered hand to restore
       card = remember_hand[remember_card_index]
 
-      # Skip over the remembered card if it was played
-      if remember_card_index == removed_card_index:
-        if debug: print(f"pyhanabi.restore_hand: Player {player} skipped over restoring card {card}")
-        continue
+      # When Remembered == Actioned card, we need to check we're not adding too many of this card
+      if removed_card and card == removed_card:
+        if debug: print(f"mcts_env.restore_hand: Player {player} played {card} which previously had. Checking validity")
+        valid_cards = self.determiniser.valid_cards(player, card_index, self.state.player_hands()
+                                                    , self.state.discard_pile(), self.state.fireworks(), card_knowledge
+                                                    , remember_hand[card_index+1:len(remember_hand)])
+        # If card is no longer valid, replace with random valid
+        if not any(c == card for c in valid_cards):
+          if len(valid_cards) > 0:
+            if debug: print(f"mcts_env.restore_hand: Player {player} card {card} no longer valid. Replace with random other valid card")
+            card = random.choice(valid_cards)
+          else:
+            # Technically there could be no more valid cards (as the only other one is later in the hand)
+            # Here we invoke a variant of deal specific that destroys card knowledge
+            if debug: print(f"mcts_env.restore_hand: Player {player} card {card} no longer valid and no other valid! Invoke DealSpecific which destroys card knowledge")
+            destroy_knowledge = True
+            card = self.determiniser.valid_cards(player, card_index, self.state.player_hands()
+                                                 , self.state.discard_pile(), self.state.fireworks(), None
+                                                 , remember_hand[card_index + 1:len(remember_hand)])
+
+      # Now we're happy and can deal the identified card
+      deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, card.color(), card.rank(), destroy_knowledge)
+      if debug: print(f"mcts_env.restore_hand: Player {player} restoring card {card}")
+      self.state.apply_move(deal_specific_move)
+      if debug: print(f"mcts_env.restore_hand: Player {player} hand now {self.state.player_hands()[player]}")
+      card_index += 1
+
+    # Double check the hand is of right size. If not, deal the final card
+    if hand_size > len(self.state.player_hands()[player]):
+      card = self.determiniser.valid_card(player, card_index, self.state.player_hands()
+                                                  , self.state.discard_pile(), self.state.fireworks(), card_knowledge)
+      deal_specific_move = HanabiMove.get_deal_specific_move(card_index, player, card.color(), card.rank())
+      if debug: print(f"mcts_env.restore_hand: Player {player} restoring card {card}")
+      self.state.apply_move(deal_specific_move)
+      if debug: print(f"mcts_env.restore_hand: Player {player} hand now {self.state.player_hands()[player]}")
 
 
   def replace_hand(self, player):

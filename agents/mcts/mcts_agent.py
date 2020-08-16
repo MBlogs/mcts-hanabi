@@ -74,10 +74,10 @@ class MCTSAgent(Agent):
       print(" ################ END MCTS FORWARD MODEL ROLLOUTS ################## \n\n")
 
     # Now at the end of training
-    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
-    print(f"mcts_agent.act: Chose node {best_node}")
+    if debug: print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 

@@ -71,7 +71,7 @@ class MCTSEnv(HanabiEnv):
     This is therefore not the same as the overall game score
     """
     if self.state.end_of_game_status() == HanabiEndOfGameType.OUT_OF_LIFE_TOKENS:
-      return self.fireworks_score() - 1
+      return self.fireworks_score() - 2
     else:
       return self.fireworks_score()
 

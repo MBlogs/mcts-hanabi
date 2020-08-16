@@ -22,9 +22,9 @@ class MCTSAgent(Agent):
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
     # Limits on the time or number of rollouts (whatever is first)
-    self.max_time_limit = 1000 # in ms
+    self.max_time_limit = 2000 # in ms
     self.max_rollout_num = 500
-    self.max_simulation_steps = 2
+    self.max_simulation_steps = 3
     # Determines the only actions to consider when branching
 
     # Dictionary of lists of nodes
@@ -125,8 +125,8 @@ class MCTSAgent(Agent):
       return node.find_random_child()
 
     def score(n):
-      if self.N[n] == 0:
-        return float("-inf")  # avoid unseen moves
+      if self.N[n] <= 1:
+        return float("-inf")  # avoid rarely seen moves
       return self.Q[n] / self.N[n]  # average reward
 
     return max(self.children[node], key=score)

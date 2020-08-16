@@ -1,5 +1,6 @@
 import random
 from abc import ABC, abstractmethod
+from agents.rule_based.ruleset import Ruleset
 
 
 class Node(ABC):
@@ -39,28 +40,40 @@ class MCTSNode(Node):
     self.moves = moves
     # MB: state is subject to change based on determinisation
     self.focused_state = None
+    # Rules deciding how to expand from this node
+    self.rules = [Ruleset.tell_most_information
+                      , Ruleset.tell_playable_card
+                      , Ruleset.tell_anyone_useless_card
+                      , Ruleset.tell_playable_card_outer # Hint missing information about a playable card
+                      , Ruleset.tell_dispensable_factory(1) # Hint full inforamtion about a disardable card
+                      , Ruleset.tell_anyone_useful_card # Hint full information about an unplayable (but not discardable) card
+                      , Ruleset.play_probably_safe_factory(0.7, True) # Play card with 70% certainty
+                      , Ruleset.play_probably_safe_factory(0.4, False) # Play card with 40% certainty and <5 cards left
+                      , Ruleset.discard_probably_useless_factory(0)]
 
-  def find_children(self):
+  def find_children(self, observation):
     "All possible successors of this board state"
     # MB: States are determined by the moves to get there
     # MB: So this is technically only one version of possible children
     # MB: Node needs a focused state to get next possible moves from
+    debug = True
+
     assert self.focused_state is not None
     if self.is_terminal():
-      # print("MB: mcts_node.find_cildren: was called on terminal state. Returning empty")
+      print("MB: mcts_node.find_cildren: was called on terminal state. Returning empty")
       return []
-    # ToDo: Restrict legal move space here, according to expansion action list
-    # ToDo: How to handle the following: depth 2 in tree
-    #  First time this node is expanded there one set of legal moves.
-    #  Second time this node is reached there is another set of legal moves.
-    #  How to not restrict children on this node?
-    children = [MCTSNode(self.moves + (move,)) for move in self.focused_state.legal_moves()]
+
+    # Rulesets returns in action dict form. Return these for mcts_agent to build into moves
+    actions_by_rules = [rule(observation) for rule in self.rules]
+    if debug: print(f"mcts_node.find_children: Found actions: {actions_by_rules}")
+    children = [action for action in actions_by_rules if action is not None]
+
+    # Note: Could return duplicates
     return children
 
   def find_random_child(self):
     "Random successor of this board state (for more efficient simulation)"
     return random.choice(self.find_children())
-
 
   def is_terminal(self):
     "Returns True if the node has no children"
@@ -71,6 +84,9 @@ class MCTSNode(Node):
     return self.moves[0]
 
   def __str__(self):
+    return f"{self.moves}"
+
+  def __repr__(self):
     return f"{self.moves}"
 
   def __hash__(self):

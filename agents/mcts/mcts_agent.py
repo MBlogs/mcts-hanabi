@@ -2,34 +2,37 @@
 from rl_env import Agent
 from collections import defaultdict
 import math
-from agents.rule_based_agent import RuleBasedAgent
+import time
+from agents.rule_based.rule_based_agents import VanDenBerghAgent
 from agents.mcts.mcts_node import MCTSNode
 from agents.mcts import mcts_env
 
-AGENT_CLASSES = {'RuleBasedAgent':RuleBasedAgent}
+AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent}
 
 class MCTSAgent(Agent):
   """Agent based on Redeterminizing Information Set Monte Carlo Tree Search"""
 
   def __init__(self, config, **kwargs):
     """Initialize the agent."""
-    # ToDo: Needs to know all HanabiEnv parameters
+    # Make use of special MCTSEnv that allows redterminizing hands during rollouts
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player = config['player_id'])
     self.max_information_tokens = config.get('information_tokens', 8)
     self.root_node = None
     self.root_state = None
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
-    self.rollout_num = 50
+    # Limits on the time or number of rollouts (whatever is first)
+    self.max_time_limit = 2000 # in ms
+    self.max_rollout_num = 200
     self.max_simulation_steps = 2
     # Dictionary of lists of nodes
     self.children = dict()
     self.Q = defaultdict(int)
     self.N = defaultdict(int)
-    self.agents = [RuleBasedAgent(config), RuleBasedAgent(config), RuleBasedAgent(config)]
+    self.agents = [VanDenBerghAgent(config), VanDenBerghAgent(config), VanDenBerghAgent(config)]
 
   def act(self, observation, state):
-    debug = True
+    debug = False
     if observation['current_player_offset'] != 0:
       return None
 
@@ -39,32 +42,39 @@ class MCTSAgent(Agent):
       print(" ################################################## ")
       print(" ################ START MCTS FORWARD MODEL ROLLOUTS ################## ")
 
-    for r in range(self.rollout_num):
+    rollout = 0
+    start_time = int(round(time.time() * 1000))
+    elapsed_time = 0
+
+    # While within rollout limit and time limit, perform rollout iterations
+    while rollout < self.max_rollout_num and elapsed_time < self.max_time_limit:
       if debug: print(f" ################ START MCTS ROLLOUT: {r} ############## ")
-      # PRint initial state
       if debug: print(self.root_state)
       # Master determinisation of MCTS agent's hand
       self.environment.state = self.root_state.copy()
       self.environment.replace_hand(self.player_id)
-      if debug: print("mcts_agent.act: Player {} did master determinisation".format(self.environment.state.cur_player()))
       # Reset state of root node
       self.root_node.focused_state = self.environment.state
+      if debug: print("mcts_agent.act: Player {} did master determinisation".format(self.environment.state.cur_player()))
+      # Rollout one iteration under this master determinisation
       reward = self._do_rollout(self.root_node)
+      rollout += 1
+      elapsed_time = int(round(time.time() * 1000)) - start_time
 
       if debug:
         print(f"MB: mcts_agent.act: Tree looks like {self._get_tree_string()}")
         print(f"MB: mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
         print(f" ############### END MCTS ROLLOUT: {r} ################# \n")
-        if r % 10 == 0:
-          print(f"mcts_agent.act completed {r} rollouts")
+
     if debug:
       print("\n\n ################################################## ")
       print(" ################ END MCTS FORWARD MODEL ROLLOUTS ################## \n\n")
 
     # Now at the end of training
-    print(f"MB: mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
+    print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 

@@ -4,12 +4,10 @@ from __future__ import print_function
 import sys
 import getopt
 import rl_env
-from agents.random_agent import RandomAgent
-from agents.simple_agent import SimpleAgent
-from agents.rule_based_agent import RuleBasedAgent
+from agents.rule_based.rule_based_agents import VanDenBerghAgent
 from agents.mcts.mcts_agent import MCTSAgent
 
-AGENT_CLASSES = {'SimpleAgent': SimpleAgent, 'RandomAgent': RandomAgent, 'RuleBasedAgent':RuleBasedAgent, 'MCTSAgent':MCTSAgent}
+AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent, 'MCTSAgent': MCTSAgent}
 
 class Runner(object):
   """Runner class."""
@@ -73,7 +71,7 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 50, 'agent_classes': ['RuleBasedAgent', 'RuleBasedAgent', 'MCTSAgent']}
+  flags = {'players': 3, 'num_episodes': 5, 'agent_classes': ['MCTSAgent', 'MCTSAgent', 'MCTSAgent']}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

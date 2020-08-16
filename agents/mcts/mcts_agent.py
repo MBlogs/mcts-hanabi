@@ -102,14 +102,14 @@ class MCTSAgent(Agent):
         return reward
       if debug: print(f"mcts_agent._do_rollout: Trying to step move: {move}")
       observations, reward, done, unused_info = self.environment.step(move)
-      observations['player_observation'][self.environment.state.cur_player()]
+      observation = observations['player_observation'][self.environment.state.cur_player()]
 
     leaf.focused_state = self.environment.state
 
-    self._expand(leaf)
+    self._expand(leaf,observation)
 
     # Simulate from this point
-    reward = self._simulate(leaf, observation)
+    reward = self._simulate(leaf)
     self._backpropagate(path, reward)
     # Don't need to return reward but do it anyway
     return reward
@@ -157,7 +157,9 @@ class MCTSAgent(Agent):
 
     # Update children of this node. Some new moves may be promising in this determinsation
     print(f"mcts_agent._expand: Expanding children for node: {node}")
-    self.children[node] = self.(node, observation)
+    actions = node.find_children(observation)
+    moves = [self.environment._build_move()]
+    self.children[node] =
     if debug: print(f"mcts_agent._expand: Took assigned node {node} and updated children {self.children[node]}")
 
 

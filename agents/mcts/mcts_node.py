@@ -49,7 +49,11 @@ class MCTSNode(Node):
     if self.is_terminal():
       # print("MB: mcts_node.find_cildren: was called on terminal state. Returning empty")
       return []
-
+    # ToDo: Restrict legal move space here, according to expansion action list
+    # ToDo: How to handle the following: depth 2 in tree
+    #  First time this node is expanded there one set of legal moves.
+    #  Second time this node is reached there is another set of legal moves.
+    #  How to not restrict children on this node?
     children = [MCTSNode(self.moves + (move,)) for move in self.focused_state.legal_moves()]
     return children
 

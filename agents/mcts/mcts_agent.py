@@ -3,6 +3,7 @@ from rl_env import Agent
 from collections import defaultdict
 import math
 import time
+from agents.rule_based.ruleset import Ruleset
 from agents.rule_based.rule_based_agents import VanDenBerghAgent
 from agents.mcts.mcts_node import MCTSNode
 from agents.mcts import mcts_env
@@ -22,9 +23,21 @@ class MCTSAgent(Agent):
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
     # Limits on the time or number of rollouts (whatever is first)
-    self.max_time_limit = 2000 # in ms
-    self.max_rollout_num = 200
+    self.max_time_limit = 200 # in ms
+    self.max_rollout_num = 30
     self.max_simulation_steps = 2
+    # Determines the only actions to consider when branching
+    self.expansion_rules = [Ruleset.tell_most_information # Hint the most information
+                            , Ruleset.tell_playable_card # Hint about a playable card
+                            , Ruleset.tell_anyone_useless_card # Hint about a card that can be discarded
+                            , Ruleset.tell_playable_card_outer # Hint missing information about a playable card
+                            , Ruleset.tell_dispensable_factory # ?Hint full information about a discardable card
+                            , Ruleset.tell_anyone_useful_card # Hint full information about an unplayable (but not discardable) card
+                            , Ruleset.play_if_certain #
+                            , Ruleset.play_probably_safe_factory # Play a card if 70% playable
+                            , Ruleset.play_probably_safe_factory # Play a card if 40% playable and 5 or fewer cards
+                            , Ruleset.discard_probably_useless_factory # Discard most confident
+    ]
     # Dictionary of lists of nodes
     self.children = dict()
     self.Q = defaultdict(int)
@@ -32,7 +45,7 @@ class MCTSAgent(Agent):
     self.agents = [VanDenBerghAgent(config), VanDenBerghAgent(config), VanDenBerghAgent(config)]
 
   def act(self, observation, state):
-    debug = False
+    debug = True
     if observation['current_player_offset'] != 0:
       return None
 
@@ -79,7 +92,7 @@ class MCTSAgent(Agent):
 
 
   def _do_rollout(self, node):
-    debug = False
+    debug = True
     # Do rollout tries to roll the focused state according to the moves in the tree
 
     # Select the path through tree and expansion node
@@ -113,9 +126,9 @@ class MCTSAgent(Agent):
     return reward
 
 
+
   def _choose(self, node):
     ''' Choose move in game '''
-    # ToDO: How to handle terminal nodes?
     if node.is_terminal():
       raise RuntimeError(f"choose called on terminal node {node}")
     if node not in self.children:
@@ -144,6 +157,15 @@ class MCTSAgent(Agent):
         return path
       node = self._uct_select(node)  # descend a layer deeper
 
+# 1Hintthemostinformation(not previouslygiven) toanyotherplayer
+# 2Hintaboutaplayablecard
+# 3Hintaboutacardthatcanbediscarded
+# 4Hintmissinginformationaboutaplayablecard
+# 5Hintfullinformationaboutadiscardablecard
+# 6Hintfullinformationaboutanunplayable(butnot discardable) card
+# 7Playacard if weareatleast70 % confidentit is playable
+# 8Playacard is weareatleast40 % confidentit is playable, and wehave5 or fewercardsleft in thedeck
+# 9Discardthecardthattheplayer is mostconfident is discardable
 
   def _expand(self, node):
     "Update the `children` dict with the children of `node`"

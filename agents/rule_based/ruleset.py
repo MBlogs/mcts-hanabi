@@ -311,15 +311,6 @@ class Ruleset():
   def play_if_certain(observation):
     PLAYER_OFFSET = 0
     fireworks = observation['fireworks']
-    # # for card_index, hint in enumerate(observation['card_knowledge'][0]):
-    # #   if playable_card(hint, fireworks):
-    # #       return {'action_type': 'PLAY', 'card_index': card_index}
-    # playability_vector = get_card_playability(observation)
-    # card_index = np.argmax(playability_vector)
-    # if playability_vector[card_index]==1:
-    #   action = {'action_type': 'PLAY', 'card_index': card_index}
-    #   return action
-
     for card_index, card in enumerate(observation['card_knowledge'][0]):
       color = card['color']
       rank = card['rank']
@@ -428,10 +419,10 @@ class Ruleset():
               affected_ranks += 1
           if affected_colors > max_affected:
             max_affected = affected_colors
-            best_action = {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
+            return {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
           if affected_ranks > max_affected:
             max_affected = affected_ranks
-            best_action = {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
+            return {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
     return None
 
   # Does not take into account what information the other player has into account, and decides whether to hint rank or color randomly

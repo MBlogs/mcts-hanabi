@@ -56,11 +56,11 @@ class MCTSNode(Node):
     # MB: States are determined by the moves to get there
     # MB: So this is technically only one version of possible children
     # MB: Node needs a focused state to get next possible moves from
-    debug = True
+    debug = False
 
     assert self.focused_state is not None
     if self.is_terminal():
-      print("MB: mcts_node.find_cildren: was called on terminal state. Returning empty")
+      if debug: print("MB: mcts_node.find_cildren: was called on terminal state. Returning empty")
       return []
 
     # Rulesets returns in action dict form. Return these for mcts_agent to build into moves

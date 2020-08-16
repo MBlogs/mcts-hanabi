@@ -34,7 +34,7 @@ class MCTSAgent(Agent):
     self.agents = [VanDenBerghAgent(config), VanDenBerghAgent(config), VanDenBerghAgent(config)]
 
   def act(self, observation, state):
-    debug = True
+    debug = False
     if observation['current_player_offset'] != 0:
       return None
 
@@ -82,7 +82,7 @@ class MCTSAgent(Agent):
 
 
   def _do_rollout(self, node, observation):
-    debug = True
+    debug = False
     # Do rollout tries to roll the focused state according to the moves in the tree
 
     # Select the path through tree and expansion node
@@ -150,13 +150,13 @@ class MCTSAgent(Agent):
   def _expand(self, node, observation):
     """Update the `children` dict with the children of `node
     Observation is from perspective of acting player at that node"""
-    debug = True
+    debug = False
     if node in self.children:
       if debug: print(f"mcts_agent._expand: Oops, asked to expand an already known node: {node}")
       return
 
     # Update children of this node. Some new moves may be promising in this determinsation
-    print(f"mcts_agent._expand: Expanding children for node: {node}")
+    if debug: print(f"mcts_agent._expand: Expanding children for node: {node}")
     actions = node.find_children(observation)
     moves = set([self.environment._build_move(action) for action in actions])
     self.children[node] = [MCTSNode(node.moves+(move,)) for move in moves]
@@ -165,7 +165,7 @@ class MCTSAgent(Agent):
 
   def _simulate(self, node):
     "MB: Returns the reward for a random simulation (to completion) of `node`"
-    debug = True
+    debug = False
 
     # MB: Note: The nodes state needs to be copied and determinized/sound by here
     self.environment.state = node.focused_state
@@ -199,7 +199,7 @@ class MCTSAgent(Agent):
   def _uct_select(self, node):
     "Select a child of node, balancing exploration & exploitation"
     # All children of node should already be explored (i.e appearing in master children)
-    debug = True
+    debug = False
     assert all(n in self.children for n in self.children[node])
     # Now select which leaf node of the current fully explored tree to explore nodes for
     log_N_vertex = math.log(self.N[node])

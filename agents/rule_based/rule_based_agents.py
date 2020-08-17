@@ -31,7 +31,7 @@ class RulebasedAgent():
 
 
 class LegalRandomAgent(Agent):
-  """Agent that applies a simple heuristic."""
+  """Chooses randomly from set of legal moves"""
 
   def __init__(self, config, *args, **kwargs):
     """Initialize the agent."""
@@ -39,7 +39,6 @@ class LegalRandomAgent(Agent):
     # Extract max info tokens or set default to 8.
     self.max_information_tokens = config.get('information_tokens', 8)
     self.rules = [Ruleset.legal_random]
-    print(self.rules)
     self.rulebased = RulebasedAgent(self.rules)
 
   def act(self, observation):
@@ -47,7 +46,7 @@ class LegalRandomAgent(Agent):
 
 
 class VanDenBerghAgent(Agent):
-  """Agent that applies a simple heuristic."""
+  """High performing Rule Based agent from literature"""
 
   def __init__(self, config, *args, **kwargs):
     """Initialize the agent."""
@@ -61,14 +60,13 @@ class VanDenBerghAgent(Agent):
                   Ruleset.tell_anyone_useless_card,
                   Ruleset.tell_most_information,
                   Ruleset.discard_probably_useless_factory(0)]
-
     self.rulebased = RulebasedAgent(self.rules)
 
   def act(self, observation):
     return self.rulebased.get_move(observation)
 
 class FlawedAgent(Agent):
-  """Agent that applies a simple heuristic."""
+  """Agent that plays card under little information"""
 
   def __init__(self, config, *args, **kwargs):
     """Initialize the agent."""
@@ -81,9 +79,6 @@ class FlawedAgent(Agent):
                   Ruleset.osawa_discard,
                   Ruleset.discard_oldest_first,
                   Ruleset.discard_randomly]
-
-    print(self.rules)
-
     self.rulebased = RulebasedAgent(self.rules)
 
   def act(self, observation):

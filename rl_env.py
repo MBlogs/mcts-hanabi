@@ -123,7 +123,7 @@ class HanabiEnv(Environment):
     return self.game.max_moves()
 
   def step(self, action):
-    debug = False
+    debug = True
 
     if isinstance(action, dict):
       # Convert dict action HanabiMove

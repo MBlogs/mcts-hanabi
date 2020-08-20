@@ -1,6 +1,5 @@
 import random
 from abc import ABC, abstractmethod
-from agents.rule_based.ruleset import Ruleset
 
 
 class Node(ABC):
@@ -35,21 +34,13 @@ class Node(ABC):
 
 
 class MCTSNode(Node):
-  def __init__(self, moves):
+  def __init__(self, moves,rules):
     # MB: moves is a tuple of moves that uniquely identify this node
     self.moves = moves
     # MB: state is subject to change based on determinisation
     self.focused_state = None
     # Rules deciding how to expand from this node
-    self.rules = [Ruleset.tell_most_information
-                      , Ruleset.tell_playable_card
-                      , Ruleset.tell_anyone_useless_card
-                      , Ruleset.tell_playable_card_outer # Hint missing information about a playable card
-                      , Ruleset.tell_dispensable_factory(1) # Hint full inforamtion about a disardable card
-                      , Ruleset.tell_anyone_useful_card # Hint full information about an unplayable (but not discardable) card
-                      , Ruleset.play_probably_safe_factory(0.7, True) # Play card with 70% certainty
-                      , Ruleset.play_probably_safe_factory(0.4, False) # Play card with 40% certainty and <5 cards left
-                      , Ruleset.discard_probably_useless_factory(0)]
+    self.rules = rules
 
   def find_children(self, observation):
     "All possible successors of this board state"

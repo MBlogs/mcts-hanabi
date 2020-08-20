@@ -3,9 +3,11 @@ from rl_env import Agent
 from collections import defaultdict
 import math
 import time
-from agents.rule_based.rule_based_agents import VanDenBerghAgent
-from agents.mcts.mcts_node import MCTSNode
 from agents.mcts import mcts_env
+from agents.mcts.mcts_node import MCTSNode
+from agents.rule_based.ruleset import Ruleset
+from agents.rule_based.rule_based_agents import VanDenBerghAgent
+from agents.rule_based.rule_based_agents import LegalRandomAgent
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent}
 
@@ -14,24 +16,32 @@ class MCTSAgent(Agent):
 
   def __init__(self, config, **kwargs):
     """Initialize the agent."""
-    # Make use of special MCTSEnv that allows redterminizing hands during rollouts
-    self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player = config['player_id'])
-    self.max_information_tokens = config.get('information_tokens', 8)
+    # Dictionary of lists of nodes
+    self.children = dict()
+    self.Q = defaultdict(int)
+    self.N = defaultdict(int)
     self.root_node = None
     self.root_state = None
+    # Make use of special MCTSEnv that allows redterminizing hands during rollouts
+    self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id'])
+    self.max_information_tokens = config.get('information_tokens', 8)
     # MB: Nodes hashed by moves to get there
     self.exploration_weight = 2.5
     # Limits on the time or number of rollouts (whatever is first)
     self.max_time_limit = 2000 # in ms
     self.max_rollout_num = 500
     self.max_simulation_steps = 3
+    self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
     # Determines the only actions to consider when branching
-
-    # Dictionary of lists of nodes
-    self.children = dict()
-    self.Q = defaultdict(int)
-    self.N = defaultdict(int)
-    self.agents = [VanDenBerghAgent(config), VanDenBerghAgent(config), VanDenBerghAgent(config)]
+    self.rules = [Ruleset.tell_most_information
+      , Ruleset.tell_playable_card
+      , Ruleset.tell_anyone_useless_card
+      , Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
+      , Ruleset.tell_dispensable_factory(1)  # Hint full inforamtion about a disardable card
+      , Ruleset.tell_anyone_useful_card  # Hint full information about an unplayable (but not discardable) card
+      , Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
+      , Ruleset.play_probably_safe_factory(0.4, False)  # Play card with 40% certainty and <5 cards left
+      , Ruleset.discard_probably_useless_factory(0)]
 
   def act(self, observation, state):
     debug = False
@@ -74,7 +84,8 @@ class MCTSAgent(Agent):
       print(" ################ END MCTS FORWARD MODEL ROLLOUTS ################## \n\n")
 
     # Now at the end of training
-    if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    #if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
@@ -94,9 +105,7 @@ class MCTSAgent(Agent):
     for move in leaf.moves:
       if not any(move == legal_move for legal_move in self.environment.state.legal_moves()):
         if debug: print(f"MB: mcts_agent._do_rollout: move {move} not valid for this determinisation")
-
-        # MB: If can't reach node on this determinisation, return 0 when reaching here
-        # MB: Hopefully de-incetivises paths that are less likely to be the case
+        # MB: If can't reach node on this determinisation, return reward when reaching here
         reward = self.environment.state.reward()
         self._backpropagate(path, reward)
         return reward
@@ -106,7 +115,7 @@ class MCTSAgent(Agent):
 
     leaf.focused_state = self.environment.state
 
-    self._expand(leaf,observation)
+    self._expand(leaf, observation)
 
     # Simulate from this point
     reward = self._simulate(leaf)
@@ -159,7 +168,7 @@ class MCTSAgent(Agent):
     if debug: print(f"mcts_agent._expand: Expanding children for node: {node}")
     actions = node.find_children(observation)
     moves = set([self.environment._build_move(action) for action in actions])
-    self.children[node] = [MCTSNode(node.moves+(move,)) for move in moves]
+    self.children[node] = [MCTSNode(node.moves+(move,), self.rules) for move in moves]
     if debug: print(f"mcts_agent._expand: Took assigned node {node} and updated children {self.children[node]}")
 
 
@@ -216,7 +225,7 @@ class MCTSAgent(Agent):
   def _reset(self, state):
     self.player_id = state.cur_player()
     self.root_state = state.copy()
-    self.root_node = MCTSNode(())
+    self.root_node = MCTSNode((), self.rules)
     self.children = dict()
     self.Q = defaultdict(int)
     self.N = defaultdict(int)

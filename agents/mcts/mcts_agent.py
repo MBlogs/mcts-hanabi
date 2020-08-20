@@ -25,23 +25,22 @@ class MCTSAgent(Agent):
     # Make use of special MCTSEnv that allows redterminizing hands during rollouts
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id'])
     self.max_information_tokens = config.get('information_tokens', 8)
-    # MB: Nodes hashed by moves to get there
-    self.exploration_weight = 2.5
     # Limits on the time or number of rollouts (whatever is first)
     self.max_time_limit = 2000 # in ms
     self.max_rollout_num = 500
     self.max_simulation_steps = 3
     self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
+    self.exploration_weight = 2.5
     # Determines the only actions to consider when branching
     self.rules = [Ruleset.tell_most_information
-      , Ruleset.tell_playable_card
-      , Ruleset.tell_anyone_useless_card
-      , Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
-      , Ruleset.tell_dispensable_factory(1)  # Hint full inforamtion about a disardable card
-      , Ruleset.tell_anyone_useful_card  # Hint full information about an unplayable (but not discardable) card
-      , Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
-      , Ruleset.play_probably_safe_factory(0.4, False)  # Play card with 40% certainty and <5 cards left
-      , Ruleset.discard_probably_useless_factory(0)]
+      ,Ruleset.tell_playable_card
+      ,Ruleset.tell_anyone_useless_card
+      ,Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
+      ,Ruleset.tell_dispensable_factory(1)  # Hint full inforamtion about a disardable card
+      ,Ruleset.tell_anyone_useful_card  # Hint full information about an unplayable (but not discardable) card
+      ,Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
+      ,Ruleset.play_probably_safe_factory(0.4, False)  # Play card with 40% certainty and <5 cards left
+      ,Ruleset.discard_probably_useless_factory(0)]
 
   def act(self, observation, state):
     debug = False
@@ -122,7 +121,6 @@ class MCTSAgent(Agent):
     self._backpropagate(path, reward)
     # Don't need to return reward but do it anyway
     return reward
-
 
 
   def _choose(self, node):

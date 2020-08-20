@@ -18,7 +18,7 @@ class MCTSEnv(HanabiEnv):
     self.record_moves.reset(observations)
 
   def step(self, action):
-    debug = True
+    debug = False
 
     # Convert action into HanabiMove
     if isinstance(action, dict):
@@ -78,13 +78,7 @@ class MCTSEnv(HanabiEnv):
     """Custom reward function for use during RIS-MCTS rollouts
     This is therefore not the same as the overall game score
     """
-    score = self.fireworks_score()
-    # Penalise ending the game
-    if self.state.end_of_game_status() == HanabiEndOfGameType.OUT_OF_LIFE_TOKENS:
-      score -= 2
-    # Penalise critical discards
-    score -= self.record_moves.critical_discards()
-
+    score = self.fireworks_score() - self.record_moves.regret()
     return score
 
   def return_hand(self,player):
@@ -251,57 +245,6 @@ def make(environment_name="Hanabi-Full", num_players=2, mcts_player=0, pyhanabi_
                 8,
             "max_life_tokens":
                 3,
-            "observation_type":
-                pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value
-        })
-  elif environment_name == "Hanabi-Full-Minimal":
-    return MCTSEnv(
-        config={
-            "colors": 5,
-            "ranks": 5,
-            "players": num_players,
-            "mcts_player":mcts_player,
-            "max_information_tokens": 8,
-            "max_life_tokens": 3,
-            "observation_type": pyhanabi.AgentObservationType.MINIMAL.value
-        })
-  elif environment_name == "Hanabi-Small":
-    return MCTSEnv(
-        config={
-            "colors":
-                2,
-            "ranks":
-                5,
-            "players":
-                num_players,
-            "mcts_player":
-              mcts_player,
-            "hand_size":
-                2,
-            "max_information_tokens":
-                3,
-            "max_life_tokens":
-                1,
-            "observation_type":
-                pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value
-        })
-  elif environment_name == "Hanabi-Very-Small":
-    return MCTSEnv(
-        config={
-            "colors":
-                1,
-            "ranks":
-                5,
-            "players":
-                num_players,
-            "mcts_player":
-                mcts_player,
-            "hand_size":
-                2,
-            "max_information_tokens":
-                3,
-            "max_life_tokens":
-                1,
             "observation_type":
                 pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value
         })

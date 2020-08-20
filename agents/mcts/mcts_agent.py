@@ -27,8 +27,8 @@ class MCTSAgent(Agent):
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id'])
     self.max_information_tokens = config.get('information_tokens', 8)
     # Limits on the time or number of rollouts (whatever is first)
-    self.max_time_limit = 1000 # in ms
-    self.max_rollout_num = 100
+    self.max_time_limit = 2000 # in ms
+    self.max_rollout_num = 250
     self.max_simulation_steps = config["players"]
     self.agents = [VanDenBerghAgent(config) for _ in range(config["players"])]
     self.exploration_weight = 2.5
@@ -45,7 +45,7 @@ class MCTSAgent(Agent):
       ,Ruleset.discard_probably_useless_factory(0)]
 
   def act(self, observation, state):
-    debug = True
+    debug = False
     if observation['current_player_offset'] != 0:
       return None
 
@@ -90,16 +90,17 @@ class MCTSAgent(Agent):
 
     # Now at the end of training
     if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
-    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
-    #print(f"mcts_agent.act: Chose node {best_node}")
+    print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 
   def _do_rollout(self, node, observation):
-    debug = True
+    # ToDO: Should not being able to get to node/tree depth backprop the full path?
+    debug = False
     # Do rollout tries to roll the focused state according to the moves in the tree
 
     # Select the path through tree and expansion node
@@ -107,21 +108,19 @@ class MCTSAgent(Agent):
     leaf = path[-1]
     if debug: print(f"MB: mcts_agent._do_rollout: Leaf node to roll out from is {leaf}")
 
-    # Assign the focused_state of the node (if possible)
+    # Try to get down to the selected node to roll out from it
     for move in leaf.moves:
-      if not any(move == legal_move for legal_move in self.environment.state.legal_moves()):
-        if debug: print(f"MB: mcts_agent._do_rollout: move {move} not valid for this determinisation")
-        # MB: If can't reach node on this determinisation, return reward when reaching here
+      # If move not legal on this determinisation cut path here are backpropogate
+      if (not any(move == legal_move for legal_move in self.environment.state.legal_moves())):
         reward = self.environment.reward()
         self._backpropagate(path, reward)
-        return ["Cut before:"+str(move)]+path, reward
+        return path, reward
       if debug: print(f"mcts_agent._do_rollout: Trying to step move: {move}")
       observations, reward, done, unused_info = self.environment.step(move)
       observation = observations['player_observations'][self.environment.state.cur_player()]
 
     leaf.focused_state = self.environment.state
     self._expand(leaf, observation)
-
     # Simulate from this point
     reward = self._simulate(leaf)
     self._backpropagate(path, reward)

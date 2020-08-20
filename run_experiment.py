@@ -72,7 +72,7 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 5, 'agent_classes': ['MCTSAgent', 'VanDenBerghAgent', 'VanDenBerghAgent']}
+  flags = {'players': 3, 'num_episodes': 1, 'agent_classes': ['MCTSAgent', 'MCTSAgent', 'MCTSAgent']}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

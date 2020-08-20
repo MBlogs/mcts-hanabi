@@ -156,11 +156,11 @@ class HanabiEnv(Environment):
     observations = self._make_observation_all_players()
 
     self.record_moves.update(move, observations["player_observations"][action_player], action_player, elapsed_time)
+    if debug: self.print_state()
     if debug: print(f"rl_env.step: Game Stats: {self.record_moves.game_stats}")
     if debug: print(f"rl_env.step: Player Stats: {self.record_moves.player_stats}")
-    if debug: self.print_state()
 
-    reward = self.state.reward()
+    reward = self.fireworks_score()
     self.start_time = time.time()
     info = {}
     return (observations, reward, done, info)

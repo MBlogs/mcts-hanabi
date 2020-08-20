@@ -619,10 +619,6 @@ class HanabiState(object):
       score += f
     return score
 
-  def reward(self):
-    # This is the standard reward to use in rl_env
-    return self.fireworks_score()
-
   def deal_random_card(self):
     """If cur_player == CHANCE_PLAYER_ID, make a random card-deal move."""
     lib.StateDealCard(self._state)

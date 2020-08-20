@@ -14,17 +14,19 @@ class MCTSEnv(HanabiEnv):
     self.determiniser = MCTSDeterminizer()
     super().__init__(config)
 
+  def reset(self, observations):
+    self.record_moves.reset(observations)
 
   def step(self, action):
-    debug = False
+    debug = True
 
     # Convert action into HanabiMove
     if isinstance(action, dict):
-      action = self._build_move(action)
+      move = self._build_move(action)
     elif isinstance(action, int):
-      action = self.game.get_move(action)
+      move = self.game.get_move(action)
     elif isinstance(action, pyhanabi.HanabiMove):
-      pass
+      move = action
     else:
       raise ValueError("Expected action as dict or int, got: {}".format(
           action))
@@ -32,12 +34,12 @@ class MCTSEnv(HanabiEnv):
     # If Play or Discard, make note of the card
     actioned_card = None
     action_player = self.state.cur_player()
-    if action.type() == pyhanabi.HanabiMoveType.DISCARD or action.type() == pyhanabi.HanabiMoveType.PLAY:
-      actioned_card = self.state.player_hands()[self.state.cur_player()][action.card_index()]
+    if move.type() == pyhanabi.HanabiMoveType.DISCARD or move.type() == pyhanabi.HanabiMoveType.PLAY:
+      actioned_card = self.state.player_hands()[self.state.cur_player()][move.card_index()]
 
-    # Apply the action
-    if debug: print(f"MB: mcts_env.step: Player {self.state.cur_player()} applying action {action}")
-    self.state.apply_move(action)
+    # Apply the move
+    if debug: print(f"MB: mcts_env.step: Player {self.state.cur_player()} applying move {move}")
+    self.state.apply_move(move)
 
     # If cur_player is now chance, player needs a random card dealt (KEEP)
     while self.state.cur_player() == pyhanabi.CHANCE_PLAYER_ID:
@@ -46,7 +48,7 @@ class MCTSEnv(HanabiEnv):
 
     # If the acting player was not me, restore as best as possible their hand
     if action_player != self.mcts_player:
-     self.restore_hand(action_player, self.remember_hand, actioned_card, action.card_index())
+     self.restore_hand(action_player, self.remember_hand, actioned_card, move.card_index())
      if debug: print(f"mcts_env.step: Player {action_player} restored hand")
 
     # Now we're onto the  next player. If not me, remember, then replace their hand
@@ -56,24 +58,34 @@ class MCTSEnv(HanabiEnv):
       self.replace_hand(self.state.cur_player())
       if debug: print(f"mcts_env.step: Player {self.state.cur_player()} replaced hand")
 
-    # Now make observation, as action player hand is restored and new player hand is redeterminised
-    observation = self._make_observation_all_players()
     if debug: self.print_state()
-
+    # Now make observation, as action player hand is restored and new player hand is redeterminised
+    observations = self._make_observation_all_players()
+    # Now move complete, update the stats record
+    self.record_moves.update(move, observations["player_observations"][action_player], action_player, 0)
     reward = self.reward()
     done = self.state.is_terminal()
     info = {}
-    return (observation, reward, done, info)
+    return (observations, reward, done, info)
 
+  def game_stats(self):
+    return self.record_moves.game_stats
+
+  def player_stats(self):
+    return self.record_moves.player_stats
 
   def reward(self):
     """Custom reward function for use during RIS-MCTS rollouts
     This is therefore not the same as the overall game score
     """
+    score = self.fireworks_score()
+    # Penalise ending the game
     if self.state.end_of_game_status() == HanabiEndOfGameType.OUT_OF_LIFE_TOKENS:
-      return self.fireworks_score() - 2
-    else:
-      return self.fireworks_score()
+      score -= 2
+    # Penalise critical discards
+    score -= self.record_moves.critical_discards()
+
+    return score
 
   def return_hand(self,player):
     """Return all cards from a player's hand to the deck

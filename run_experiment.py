@@ -5,9 +5,10 @@ import sys
 import getopt
 import rl_env
 from agents.rule_based.rule_based_agents import VanDenBerghAgent
+from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.mcts.mcts_agent import MCTSAgent
 
-AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent, 'MCTSAgent': MCTSAgent}
+AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent, 'MCTSAgent': MCTSAgent}
 
 class Runner(object):
   """Runner class."""
@@ -19,9 +20,11 @@ class Runner(object):
     self.environment = rl_env.make('Hanabi-Full', num_players=flags['players'])
     self.agent_classes = [AGENT_CLASSES[agent_class] for agent_class in flags['agent_classes']]
 
+
   def run(self):
     """Run episodes."""
-    rewards = []
+    game_stats = []
+    player_stats = [[],[],[]]
 
     for episode in range(flags['num_episodes']):
       observations = self.environment.reset()
@@ -38,7 +41,7 @@ class Runner(object):
         for agent_id, agent in enumerate(agents):
           observation = observations['player_observations'][agent_id]
           # MB: MCTSAgent needs to be passed full state to act as base for MCTS
-          # MB: Note that it replaces it's hand with random before each rollout so not 'cheating' by knowing the full state
+          # MB: Note that it replaces it's hand before each rollout so not 'cheating' by knowing the full state
           if isinstance(agent, MCTSAgent):
             action = agent.act(observation, self.environment.state)
           else:
@@ -49,29 +52,27 @@ class Runner(object):
             current_player_action = action
           else:
             assert action is None
-        # Make an environment step.
-        # print('Agent: {} action: {}'.format(observation['current_player'],current_player_action))
 
         observations, reward, done, unused_info = self.environment.step(current_player_action)
-        episode_reward += reward
 
-        # MB: Try a return and DealSpecifc Move upfront for the next player (note this is now in rl_env.Step()
-        # print_state(self)
-        # return_action = {'action_type': 'RETURN', 'card_index': 0}
-        # observations, reward, done, unused_info = self.environment.step(return_action)
-
-      # MB: Rewards seems pretty funky. It's zero for all non-perfect games? A: Yes may want to change that
-      rewards.append(episode_reward)
-      # print('Running episode: %d' % episode)
       print('Episode {}, Score: {}'.format(episode, self.environment.fireworks_score()))
-    return rewards
+      game_stats.append(self.environment.record_moves.game_stats)
+      for i in range(len(self.agent_classes)):
+        player_stats[i].append(self.environment.record_moves.player_stats[i])
+
+    print(f"GameStats: {game_stats}")
+    print(f"PlayerStats: {player_stats}")
+    avg_score = sum([g["score"] for g in game_stats]) / flags['num_episodes']
+    avg_time = sum([p["elapsed_time"]/p["moves"] for p in player_stats[0]]) / flags['num_episodes']
+    print(f"Average Score: {avg_score}")
+    print(f"Average Think Time: {avg_time}")
 
   def print_state(self):
     self.environment.print_state()
 
 if __name__ == "__main__":
   # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 50, 'agent_classes': ['MCTSAgent', 'MCTSAgent','MCTSAgent']}
+  flags = {'players': 3, 'num_episodes': 5, 'agent_classes': ['MCTSAgent', 'VanDenBerghAgent', 'VanDenBerghAgent']}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     flag = flag[2:]  # Strip leading --.
     flags[flag] = type(flags[flag])(value)
 
-    # MB: Added check that the number of agent classes is equal to number of players
+  # Agents list needs to be same size as number of players declared
   if len(flags['agent_classes']) != flags['players']:
     sys.exit('Number of agent classes not same as number of players')
 

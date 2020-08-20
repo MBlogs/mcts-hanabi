@@ -6,6 +6,9 @@ from __future__ import division
 import pyhanabi
 from pyhanabi import color_char_to_idx, HanabiMoveType
 
+import time
+from record_moves import RecordMoves
+
 MOVE_TYPES = [_.name for _ in pyhanabi.HanabiMoveType]
 
 #-------------------------------------------------------------------------------
@@ -93,16 +96,17 @@ class HanabiEnv(Environment):
     #self.observation_encoder = pyhanabi.ObservationEncoder(
     #    self.game, pyhanabi.ObservationEncoderType.CANONICAL)
     self.players = self.game.num_players()
+    self.record_moves = RecordMoves(self.players)
+    self.start_time = time.time()
 
   def reset(self):
     """Resets the environment for a new game."""
     self.state = self.game.new_initial_state()
-
     while self.state.cur_player() == pyhanabi.CHANCE_PLAYER_ID:
       self.state.deal_random_card()
-
     obs = self._make_observation_all_players()
     obs["current_player"] = self.state.cur_player()
+    self.record_moves.reset(obs["player_observations"][obs["current_player"]])
     return obs
 
   def vectorized_observation_shape(self):
@@ -124,24 +128,24 @@ class HanabiEnv(Environment):
 
   def step(self, action):
     debug = True
+    elapsed_time = int(round((time.time() - self.start_time)*1000))
 
     if isinstance(action, dict):
       # Convert dict action HanabiMove
-      action = self._build_move(action)
+      move = self._build_move(action)
     elif isinstance(action, int):
       # Convert int action into a Hanabi move.
-      action = self.game.get_move(action)
+      move = self.game.get_move(action)
     elif isinstance(action, pyhanabi.HanabiMove):
-      pass
+      move = action
     else:
       raise ValueError("Expected action as dict or int, got: {}".format(
           action))
-    last_score = self.state.score()
 
     # Apply the action to the state
+    action_player = self.state.cur_player()
     if debug: print(f"rl_env.step: Player {self.state.cur_player()} applying action {action}")
-    self.state.apply_move(action)
-    # if debug: print("MB: Applied the action")
+    self.state.apply_move(move)
     done = self.state.is_terminal()
 
     # MB: Deals with standard scenario if player need another card
@@ -149,14 +153,17 @@ class HanabiEnv(Environment):
       if debug: print("rl_env.step: Dealing random card")
       self.state.deal_random_card()
 
-    observation = self._make_observation_all_players()
+    observations = self._make_observation_all_players()
+
+    self.record_moves.update(move, observations["player_observations"][action_player], action_player, elapsed_time)
+    if debug: print(f"rl_env.step: Game Stats: {self.record_moves.game_stats}")
+    if debug: print(f"rl_env.step: Player Stats: {self.record_moves.player_stats}")
     if debug: self.print_state()
 
-    # Reward is score differential. May be large and negative at game end.
-    # reward = self.state.score() - last_score
     reward = self.state.reward()
+    self.start_time = time.time()
     info = {}
-    return (observation, reward, done, info)
+    return (observations, reward, done, info)
 
   def fireworks_score(self):
     return self.state.fireworks_score()
@@ -225,9 +232,8 @@ class HanabiEnv(Environment):
         hint_d["rank"] = hint.rank()
         player_hints_as_dicts.append(hint_d)
       obs_dict["card_knowledge"].append(player_hints_as_dicts)
-    # MB Try to figure out why this can't be encoded as a valid observation
-    #print("-------------------- ENCODING ----------------------\n {}\n --------------- END ENCODING --------------------".format(observation))
     # ipdb.set_trace()
+    # Edits to framework introducing ReturnCard and DealSpecific broke observation encoding
     # obs_dict["vectorized"] = self.observation_encoder.encode(observation)
     obs_dict["pyhanabi"] = observation
     return obs_dict
@@ -335,7 +341,9 @@ def make(environment_name="Hanabi-Full", num_players=2, pyhanabi_path=None):
             "max_life_tokens":
                 3,
             "observation_type":
-                pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value
+                pyhanabi.AgentObservationType.CARD_KNOWLEDGE.value,
+            'random_start_player':
+                True
         })
   elif environment_name == "Hanabi-Full-Minimal":
     return HanabiEnv(

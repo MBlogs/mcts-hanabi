@@ -153,23 +153,19 @@ class PiersAgent(Agent):
     def act(self, observation):
       return self.rulebased.get_move(observation)
 
-  class OuterAgent(Agent):
-    """Agent that applies a simple heuristic."""
-
-    def __init__(self, config, *args, **kwargs):
-      """Initialize the agent."""
-      self.config = config
-      # Extract max info tokens or set default to 8.
-      self.max_information_tokens = config.get('information_tokens', 8)
-
-      # self.rules = [Ruleset.play_safe_card,Ruleset.tell_playable_card_outer,Ruleset.discard_randomly,Ruleset.legal_random]
-      self.rules = [Ruleset.play_safe_card,
-                    Ruleset.osawa_discard,
-                    Ruleset.tell_playable_card_outer,
-                    Ruleset.tell_unknown,
-                    Ruleset.discard_randomly]
-
-      self.rulebased = RulebasedAgent(self.rules)
-
-    def act(self, observation):
-      return self.rulebased.get_move(observation)
+class OuterAgent(Agent):
+  """Agent that applies a simple heuristic."""
+  def __init__(self, config, *args, **kwargs):
+    """Initialize the agent."""
+    self.config = config
+    # Extract max info tokens or set default to 8.
+    self.max_information_tokens = config.get('information_tokens', 8)
+    # self.rules = [Ruleset.play_safe_card,Ruleset.tell_playable_card_outer,Ruleset.discard_randomly,Ruleset.legal_random]
+    self.rules = [Ruleset.play_safe_card,
+                  Ruleset.osawa_discard,
+                  Ruleset.tell_playable_card_outer,
+                  Ruleset.tell_unknown,
+                  Ruleset.discard_randomly]
+    self.rulebased = RulebasedAgent(self.rules)
+  def act(self, observation):
+    return self.rulebased.get_move(observation)

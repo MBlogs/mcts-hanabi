@@ -5,10 +5,16 @@ import sys
 import getopt
 import rl_env
 from agents.rule_based.rule_based_agents import VanDenBerghAgent
+from agents.rule_based.rule_based_agents import OuterAgent
+from agents.rule_based.rule_based_agents import PiersAgent
+from agents.rule_based.rule_based_agents import IGGIAgent
+from agents.rule_based.rule_based_agents import LegalRandomAgent
+from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.mcts.mcts_agent import MCTSAgent
 
-AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent, 'MCTSAgent': MCTSAgent}
+AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent, 'MCTSAgent': MCTSAgent
+                 , 'OuterAgent':OuterAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent}
 
 class Runner(object):
   """Runner class."""
@@ -23,17 +29,18 @@ class Runner(object):
 
   def run(self):
     """Run episodes."""
-    game_stats = []
-    player_stats = [[],[],[]]
 
     for episode in range(flags['num_episodes']):
       observations = self.environment.reset()
 
       # MB: Pass absolute player_id upfront to all agents (MCTS needs this for forward model)
       agents = []
+      game_stats = []
+      player_stats = []
       for i in range(len(self.agent_classes)):
         self.agent_config.update({'player_id': i})
         agents.append(self.agent_classes[i](self.agent_config))
+        player_stats.append([])
 
       done = False
       episode_reward = 0
@@ -72,7 +79,7 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 1, 'agent_classes': ['MCTSAgent', 'MCTSAgent', 'MCTSAgent']}
+  flags = {'players': 3, 'num_episodes': 1, 'agent_classes': ['MCTSAgent', 'VanDenBerghAgent', 'VanDenBerghAgent']}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

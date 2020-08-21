@@ -27,16 +27,16 @@ class MCTSAgent(Agent):
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id'])
     self.max_information_tokens = config.get('information_tokens', 8)
     # Limits on the time or number of rollouts (whatever is first)
-    self.max_time_limit = 2000 # in ms
-    self.max_rollout_num = 250
+    self.max_time_limit = 1000 # in ms
+    self.max_rollout_num = 10
     self.max_simulation_steps = config["players"]
     self.agents = [VanDenBerghAgent(config) for _ in range(config["players"])]
     self.exploration_weight = 2.5
     # Determines the only actions to consider when branching
     self.rules = True
-    self.rules = [Ruleset.tell_most_information
-      ,Ruleset.tell_playable_card
-      ,Ruleset.tell_anyone_useless_card
+    self.rules = [Ruleset.tell_most_information_factory(True) # TellMostInformation
+      ,Ruleset.tell_anyone_useful_card # TellAnyoneUseful
+      ,Ruleset.tell_dispensable_factory(8)
       ,Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
       ,Ruleset.tell_dispensable_factory(1)  # Hint full inforamtion about a disardable card
       ,Ruleset.tell_anyone_useful_card  # Hint full information about an unplayable (but not discardable) card
@@ -45,7 +45,7 @@ class MCTSAgent(Agent):
       ,Ruleset.discard_probably_useless_factory(0)]
 
   def act(self, observation, state):
-    debug = False
+    debug = True
     if observation['current_player_offset'] != 0:
       return None
 
@@ -100,7 +100,7 @@ class MCTSAgent(Agent):
 
   def _do_rollout(self, node, observation):
     # ToDO: Should not being able to get to node/tree depth backprop the full path?
-    debug = False
+    debug = True
     # Do rollout tries to roll the focused state according to the moves in the tree
 
     # Select the path through tree and expansion node
@@ -118,6 +118,7 @@ class MCTSAgent(Agent):
       if debug: print(f"mcts_agent._do_rollout: Trying to step move: {move}")
       observations, reward, done, unused_info = self.environment.step(move)
       observation = observations['player_observations'][self.environment.state.cur_player()]
+      if debug: print(self.environment.state)
 
     leaf.focused_state = self.environment.state
     self._expand(leaf, observation)
@@ -165,8 +166,7 @@ class MCTSAgent(Agent):
     if node in self.children:
       if debug: print(f"mcts_agent._expand: Oops, asked to expand an already known node: {node}")
       return
-
-    # Update children of this node. Some new moves may be promising in this determinsation
+    # ToDo: Update children of this node. Some new moves may be promising in this determinsation
     if debug: print(f"mcts_agent._expand: Expanding children for node: {node}")
     actions = node.find_children(observation)
     moves = set([self.environment._build_move(action) for action in actions])

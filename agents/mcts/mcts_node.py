@@ -47,7 +47,7 @@ class MCTSNode(Node):
     # MB: States are determined by the moves to get there
     # MB: So this is technically only one version of possible children
     # MB: Node needs a focused state to get next possible moves from
-    debug = False
+    debug = True
 
     assert self.focused_state is not None
     if self.is_terminal():

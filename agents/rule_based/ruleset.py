@@ -13,7 +13,8 @@
 # limitations under the License.
 """Simple Agent."""
 
-# Sourced at https://github.com/rocanaan/hanabi-ad-hoc-learning
+# Michael Brooks Declaration: This code was sourced at https://github.com/rocanaan/hanabi-ad-hoc-learning
+# Edits are called out
 
 from rl_env import Agent
 import random
@@ -88,8 +89,6 @@ def get_visible_cards(observation, player_offset):
 
 def get_card_playability(observation, player_offset=0):
   visible_cards = get_visible_cards(observation, player_offset)
-  # print(observation)
-  # print(visible_cards
   my_hand_size = len(observation['observed_hands'][player_offset])
   playability_array = np.zeros(my_hand_size)
   for hand_index in range(my_hand_size):
@@ -99,11 +98,6 @@ def get_card_playability(observation, player_offset=0):
     for plausible in plausible_cards:
       num_in_deck = num_in_deck_by_rank[plausible.rank()]
       for visible in visible_cards:
-        # print(str(plausible) + " " + str(visible))
-        # print(visible['color'])
-        # print(plausible.color())
-        # print(visible['rank'])
-        # print(plausible.rank())
         if visible['color'] == colors[plausible.color()] and visible['rank'] == plausible.rank():
           num_in_deck -= 1
       total_possibilities += num_in_deck
@@ -111,22 +105,6 @@ def get_card_playability(observation, player_offset=0):
         playable_possibilities += num_in_deck
     playability_array[hand_index] = playable_possibilities / total_possibilities
 
-    # for plausible in plausible_cards:
-    #   num_in_deck = num_in_deck_by_rank[plausible.rank()]
-    #   possible_in_deck += num_in_deck
-
-    #   for other_player in range (1,observation['num_players']):
-    #     if other_player != player_offset
-    #       their_hand = observation['observed_hands'][other_player]:
-    #         for card in their_hand:
-    #           if card['color'] == plausible.color() and card['rank'] == plausible.rank():
-    #             possible_in_deck -=1:
-    # print(num_in_deck)
-    # for player in range(1,observation['num_players']):
-    #   if player!= player_offset:
-
-  # print (observation['pyhanabi'].card_knowledge())
-  # print(player_hints)
   return playability_array
 
 
@@ -143,11 +121,6 @@ def get_probability_useless(observation, player_offset=0):
     for plausible in plausible_cards:
       num_in_deck = num_in_deck_by_rank[plausible.rank()]
       for visible in visible_cards:
-        # print(str(plausible) + " " + str(visible))
-        # print(visible['color'])
-        # print(plausible.color())
-        # print(visible['rank'])
-        # print(plausible.rank())
         if visible['color'] == colors[plausible.color()] and visible['rank'] == plausible.rank():
           num_in_deck -= 1
       total_possibilities += num_in_deck
@@ -155,22 +128,6 @@ def get_probability_useless(observation, player_offset=0):
         useless_possibilities += num_in_deck
     probability_useless[hand_index] = useless_possibilities / total_possibilities
 
-    # for plausible in plausible_cards:
-    #   num_in_deck = num_in_deck_by_rank[plausible.rank()]
-    #   possible_in_deck += num_in_deck
-
-    #   for other_player in range (1,observation['num_players']):
-    #     if other_player != player_offset
-    #       their_hand = observation['observed_hands'][other_player]:
-    #         for card in their_hand:
-    #           if card['color'] == plausible.color() and card['rank'] == plausible.rank():
-    #             possible_in_deck -=1:
-    # print(num_in_deck)
-    # for player in range(1,observation['num_players']):
-    #   if player!= player_offset:
-
-  # print (observation['pyhanabi'].card_knowledge())
-  # print(player_hints)
   return probability_useless
 
 
@@ -194,13 +151,6 @@ def get_max_fireworks(observation):
       if max_fireworks[color] >= rank:
         max_fireworks[color] = rank
   return max_fireworks
-
-  #   print(label)
-  #   print(card)
-  # for color in colors:
-  #   current_value = fireworks[color]
-  #   print(current_value)
-  #   max_possible = 5
 
 
 class Ruleset():
@@ -286,14 +236,6 @@ class Ruleset():
   def play_safe_card(observation):
     PLAYER_OFFSET = 0
     fireworks = observation['fireworks']
-    # # for card_index, hint in enumerate(observation['card_knowledge'][0]):
-    # #   if playable_card(hint, fireworks):
-    # #       return {'action_type': 'PLAY', 'card_index': card_index}
-    # playability_vector = get_card_playability(observation)
-    # card_index = np.argmax(playability_vector)
-    # if playability_vector[card_index]==1:
-    #   action = {'action_type': 'PLAY', 'card_index': card_index}
-    #   return action
 
     for card_index, card in enumerate(observation['card_knowledge'][0]):
       plausible_cards = get_plausible_cards(observation, PLAYER_OFFSET, card_index)
@@ -323,7 +265,6 @@ class Ruleset():
   @staticmethod
   def tell_playable_card_outer(observation):
     fireworks = observation['fireworks']
-
     # Check if it's possible to hint a card to your colleagues.
     if observation['information_tokens'] > 0:
       # Check if there are any playable cards in the hands of the opponents.
@@ -347,11 +288,51 @@ class Ruleset():
     return None
 
   @staticmethod
+  # Tells if it 'completes' information on the card
+  def tell_anyone_useful_card(observation):
+    # Edited: Corrected
+    return Ruleset.tell_playable_card_outer(observation)
+
+  # Note: this follows the version of the rule that's used on VanDenBergh, which does not take into account whether or not they already know that information
+  # MB: Bug fixed immediate return of max affected + allow consideration of hints
+  @staticmethod
+  def tell_most_information_factory(consider_hints=False):
+    def tell_most_information(observation):
+      fireworks = observation['fireworks']
+      if observation['information_tokens'] > 0:
+        max_affected = -1
+        best_action = None
+        for player_offset in range(1, observation['num_players']):
+          player_hand = observation['observed_hands'][player_offset]
+          player_hints = observation['card_knowledge'][player_offset]
+          for card, hint in zip(player_hand, player_hints):
+            affected_colors = 0
+            affected_ranks = 0
+            for other_card in player_hand:
+              if card['color'] == other_card['color']:
+                affected_colors += 1
+                if consider_hints and hint['color'] is not None:
+                  affected_colors -= 1
+              if card['rank'] == other_card['rank']:
+                affected_ranks += 1
+                if consider_hints and hint['rank'] is not None:
+                  affected_ranks -= 1
+            if affected_colors > max_affected:
+              max_affected = affected_colors
+              best_action = {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
+            if affected_ranks > max_affected:
+              max_affected = affected_ranks
+              best_action = {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
+        return best_action
+      return None
+    return tell_most_information
+
+  # Only Targets if can be fully identified as dispensible with one piece of information
+  @staticmethod
   def tell_dispensable_factory(min_information_tokens=8):
     def tell_dispensable(observation):
       if (observation['information_tokens'] < min_information_tokens):
         fireworks = observation['fireworks']
-
         # Check if it's possible to hint a card to your colleagues.
         if observation['information_tokens'] > 0:
           # Check if there are any playable cards in the hands of the opponents.
@@ -374,18 +355,12 @@ class Ruleset():
                 if known_color is not None and known_rank is None:
                   return {'action_type': 'REVEAL_RANK', 'rank': rank, 'target_offset': player_offset}
       return None
-
     return tell_dispensable
-
-  # As far as I can tell, this is functinally identical to Tell Playable Outer
-  @staticmethod
-  def tell_anyone_useful_card(observation):
-    return Ruleset.tell_playable_card_outer(observation)
 
   @staticmethod
   def tell_anyone_useless_card(observation):
     fireworks = observation['fireworks']
-    if observation['information_tokens'] > 1:
+    if observation['information_tokens'] > 0:
       max_fireworks = get_max_fireworks(observation)
       for player_offset in range(1, observation['num_players']):
         player_hand = observation['observed_hands'][player_offset]
@@ -396,33 +371,6 @@ class Ruleset():
               return {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
             if hint['rank'] is None:
               return {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
-    return None
-
-  # Note: this follows the version of the rule that's used on VanDenBergh, which does not take into account whether or not they already know that information
-  @staticmethod
-  def tell_most_information(observation):
-    fireworks = observation['fireworks']
-    if observation['information_tokens'] > 1:
-      max_fireworks = get_max_fireworks(observation)
-      max_affected = -1
-      best_action = None
-      for player_offset in range(1, observation['num_players']):
-        player_hand = observation['observed_hands'][player_offset]
-        player_hints = observation['card_knowledge'][player_offset]
-        for card, hint in zip(player_hand, player_hints):
-          affected_colors = 0
-          affected_ranks = 0
-          for other_card in player_hand:
-            if card['color'] == other_card['color']:
-              affected_colors += 1
-            if card['rank'] == other_card['rank']:
-              affected_ranks += 1
-          if affected_colors > max_affected:
-            max_affected = affected_colors
-            return {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
-          if affected_ranks > max_affected:
-            max_affected = affected_ranks
-            return {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
     return None
 
   # Does not take into account what information the other player has into account, and decides whether to hint rank or color randomly

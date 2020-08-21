@@ -10,11 +10,11 @@ from agents.rule_based.rule_based_agents import PiersAgent
 from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
-from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.mcts.mcts_agent import MCTSAgent
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent, 'MCTSAgent': MCTSAgent
-                 , 'OuterAgent':OuterAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent}
+                  , 'OuterAgent':OuterAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
+                  , 'LegalRandomAgent':LegalRandomAgent}
 
 class Runner(object):
   """Runner class."""
@@ -29,21 +29,20 @@ class Runner(object):
 
   def run(self):
     """Run episodes."""
+    game_stats = []
+    player_stats = []
+    agents = []
+    # MB: Pass absolute player_id upfront to all agents (MCTS needs this for forward model)
+    print(",scores=[", end="")
+
+    for i in range(len(self.agent_classes)):
+      self.agent_config.update({'player_id': i})
+      agents.append(self.agent_classes[i](self.agent_config))
+      player_stats.append([])
 
     for episode in range(flags['num_episodes']):
-      observations = self.environment.reset()
-
-      # MB: Pass absolute player_id upfront to all agents (MCTS needs this for forward model)
-      agents = []
-      game_stats = []
-      player_stats = []
-      for i in range(len(self.agent_classes)):
-        self.agent_config.update({'player_id': i})
-        agents.append(self.agent_classes[i](self.agent_config))
-        player_stats.append([])
-
       done = False
-      episode_reward = 0
+      observations = self.environment.reset()
       while not done:
         for agent_id, agent in enumerate(agents):
           observation = observations['player_observations'][agent_id]
@@ -62,41 +61,59 @@ class Runner(object):
 
         observations, reward, done, unused_info = self.environment.step(current_player_action)
 
-      print('Episode {}, Score: {}'.format(episode, self.environment.fireworks_score()))
-      game_stats.append(self.environment.record_moves.game_stats)
+      print(self.environment.fireworks_score(), end=",")
+      game_stats.append(self.environment.game_stats())
       for i in range(len(self.agent_classes)):
-        player_stats[i].append(self.environment.record_moves.player_stats[i])
-
-    print(f"GameStats: {game_stats}")
-    print(f"PlayerStats: {player_stats}")
+        player_stats[i].append(self.environment.player_stats(i))
+    print("]")
+    print(f",stats_keys={list(game_stats[0].keys())}")
+    #print(f",game_stats = {game_stats}")
+    print(f",game_stats_simple = {self.simplify_stats(game_stats)}")
+    #print(f",player_stats = {player_stats}")
+    print(f",player_stats_simple = {[self.simplify_stats(p) for p in player_stats]}")
     avg_score = sum([g["score"] for g in game_stats]) / flags['num_episodes']
     avg_time = sum([p["elapsed_time"]/p["moves"] for p in player_stats[0]]) / flags['num_episodes']
-    print(f"Average Score: {avg_score}")
-    print(f"Average Think Time: {avg_time}")
+    print(f",avg_score={avg_score}")
+    print(f",avg_time={avg_time}")
+    print(")")
+
+  def simplify_stats(self, stats):
+    """Extract just the numbers from the stats"""
+    return [list(g.values()) for g in stats]
 
   def print_state(self):
     self.environment.print_state()
 
 if __name__ == "__main__":
-  # MB: agent_class changed to agent_classes
-  flags = {'players': 3, 'num_episodes': 1, 'agent_classes': ['MCTSAgent', 'VanDenBerghAgent', 'VanDenBerghAgent']}
+  # MB: If agent_classes list supplied, take that. Else, replicate same_agent_class however many times
+  flags = {'players': 3, 'num_episodes': 250, 'agent_classes': [],'agents': 'LegalRandomAgent'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',
-                                      'agent_class='])
+                                      'agents='])
   if arguments:
     sys.exit('usage: rl_env_example.py [options]\n'
              '--players       number of players in the game.\n'
              '--num_episodes  number of game episodes to run.\n'
              '--agent_class   {}'.format(' or '.join(AGENT_CLASSES.keys())))
 
+
+  # Convert any extra options into the flags
   for flag, value in options:
     flag = flag[2:]  # Strip leading --.
     flags[flag] = type(flags[flag])(value)
 
+  # Handle option flags: If agent provided, pave over agent_classes
+  assert flags['agents'] in AGENT_CLASSES.keys()
+  flags['agent_classes'] = [flags['agents'] for _ in range(flags["players"])]
+
   # Agents list needs to be same size as number of players declared
   if len(flags['agent_classes']) != flags['players']:
     sys.exit('Number of agent classes not same as number of players')
+
+  #Print the config
+  print("Experiment(")
+  print("flags = {}".format(flags))
 
   runner = Runner(flags)
   runner.run()

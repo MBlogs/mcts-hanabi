@@ -127,7 +127,7 @@ class HanabiEnv(Environment):
     return self.game.max_moves()
 
   def step(self, action):
-    debug = True
+    debug = False
     elapsed_time = int(round((time.time() - self.start_time)*1000))
 
     if isinstance(action, dict):
@@ -167,6 +167,11 @@ class HanabiEnv(Environment):
 
   def fireworks_score(self):
     return self.state.fireworks_score()
+
+  def game_stats(self):
+    return self.record_moves.game_stats
+  def player_stats(self,player):
+    return self.record_moves.player_stats[player]
 
   def _make_observation_all_players(self):
     """Make observation for all players.

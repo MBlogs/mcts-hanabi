@@ -45,7 +45,7 @@ class MCTSAgent(Agent):
       ,Ruleset.discard_probably_useless_factory(0)]
 
   def act(self, observation, state):
-    debug = True
+    debug = False
     if observation['current_player_offset'] != 0:
       return None
 
@@ -100,7 +100,7 @@ class MCTSAgent(Agent):
 
   def _do_rollout(self, node, observation):
     # ToDO: Should not being able to get to node/tree depth backprop the full path?
-    debug = True
+    debug = False
     # Do rollout tries to roll the focused state according to the moves in the tree
 
     # Select the path through tree and expansion node

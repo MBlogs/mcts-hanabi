@@ -30,6 +30,7 @@ class RulebasedAgent():
       print([calls / self.totalCalls for calls in self.histogram])
 
 
+
 class LegalRandomAgent(Agent):
   """Chooses randomly from set of legal moves"""
 
@@ -43,7 +44,6 @@ class LegalRandomAgent(Agent):
 
   def act(self, observation):
     return self.rulebased.get_move(observation)
-
 
 class VanDenBerghAgent(Agent):
   """High performing Rule Based agent from literature"""

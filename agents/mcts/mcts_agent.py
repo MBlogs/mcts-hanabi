@@ -39,39 +39,41 @@ class MCTSAgent(Agent):
         , Ruleset.tell_anyone_useful_card  # TellAnyoneUseful
         , Ruleset.tell_dispensable_factory(8)
         , Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
-        , Ruleset.tell_dispensable_factory(1)  # Hint full inforamtion about a disardable card
-        , Ruleset.tell_anyone_useful_card  # Hint full information about an unplayable (but not discardable) card
         , Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
         , Ruleset.play_probably_safe_factory(0.4, False)  # Play card with 40% certainty and <5 cards left
-        , Ruleset.discard_probably_useless_factory(0)]
+        , Ruleset.discard_best]
     self.determine_type = mcts_env.DetermineType.RESTORE
-    self.mcts_type = config["mcts_types"][config['player_id']]
-    self.edit_mcts_config(self.mcts_type)
+    self.mcts_type = int(config["mcts_types"][config['player_id']])
+    self._edit_mcts_config(self.mcts_type, config)
     # Make use of special MCTSEnv that allows redterminizing hands during rollouts
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id']
                                      ,determine_type = self.determine_type)
     self.max_information_tokens = config.get('information_tokens', 8)
-    print(self.get_mcts_config())
+    print(self._get_mcts_config())
 
-  def edit_mcts_config(self, mcts_type):
+  def _edit_mcts_config(self, mcts_type, config):
     """Create the default or adjusted config"""
-    if mcts_type == 0: # Default
+    if mcts_type == 0: # RIS VDB (Re, Rules, VDB)
       pass
-    elif mcts_type == 1: # Determinisation: ReplaceOnly
-      self.determine_type = mcts_env.DetermineType.REPLACE
-    elif mcts_type == 2: # Determinisation: None
+    elif mcts_type == 1: # IS Random (No re, No rules, Random)
       self.determine_type = mcts_env.DetermineType.NONE
-    elif mcts_type == 3: # No branching rules
       self.rules = None
+      self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
+    elif mcts_type == 2: # IS VDB (No re, No rules, VDB)
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.rules = None
+    elif mcts_type == 3: # RIS Random (Re, Rules, Random)
+      self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
 
-  def get_mcts_config(self):
+
+  def _get_mcts_config(self):
     return f"mcts_config = {{max_time_limit:{self.max_time_limit}, self.max_rollout_num:{self.max_rollout_num}" \
            f", max_simulation_steps:{self.max_simulation_steps}, agents:{self.agents}" \
-           f", exploration_weight:{self.exploration_weight}, rules:{self.rules}" \
-           f", redeterminisation_strategy:{self.determine_type},}}"
+           f", determine_type:{self.determine_type}" \
+           f", exploration_weight:{self.exploration_weight}, rules:{self.rules}}}" \
 
   def __str__(self):
-    return 'MCTSAgent'+self.mcts_type
+    return 'MCTSAgent'+str(self.mcts_type)
 
   def __repr__(self):
     return str(self)
@@ -93,7 +95,7 @@ class MCTSAgent(Agent):
 
     # While within rollout limit and time limit, perform rollout iterations
     while rollout < self.max_rollout_num and elapsed_time < self.max_time_limit:
-      if debug: print(f" ################ START MCTS ROLLOUT: {rollout} ############## ")
+      if debug: print(f" ################ START {self} ROLLOUT: {rollout} ############## ")
       if debug: print(self.root_state)
       # Master determinisation of MCTS agent's hand
       self.environment.state = self.root_state.copy()
@@ -109,11 +111,11 @@ class MCTSAgent(Agent):
       elapsed_time = (time.time() - start_time) * 1000
 
       if debug:
-        print(f"mcts_agent.act: Path selected for roll_out was: {path}")
-        print(f"mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
-        print(f"mcts_agent.rollout_game: Rollout Game Stats: {self.environment.game_stats()}")
-        print(f"mcts_agent.rollout_game: Rollout Player Stats: {self.environment.player_stats()}")
-        print(f"mcts_agent.act: Tree updated to: {self._get_tree_string()}")
+        print(f"{self} mcts_agent.act: Path selected for roll_out was: {path}")
+        print(f"{self} mcts_agent.rollout_game: Game completed roll-out with reward: {reward}")
+        print(f"{self} mcts_agent.rollout_game: Rollout Game Stats: {self.environment.game_stats()}")
+        print(f"{self} mcts_agent.rollout_game: Rollout Player Stats: {self.environment.player_stats()}")
+        print(f"{self} mcts_agent.act: Tree updated to: {self._get_tree_string()}")
         print(f" ############### END MCTS ROLLOUT: {rollout} ################# \n")
 
     if debug:
@@ -266,8 +268,6 @@ class MCTSAgent(Agent):
     self.N = defaultdict(int)
     self.N[self.root_node] = 0
     self.Q[self.root_node] = 0
-
-
 
   def _get_tree_string(self):
     tree_string = ""

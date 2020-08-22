@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Simple Agent."""
 
-# Michael Brooks Declaration: This code was sourced at https://github.com/rocanaan/hanabi-ad-hoc-learning
-# Edits are called out
+# Michael Brooks (MBlogs) Declaration: This code was sourced at https://github.com/rocanaan/hanabi-ad-hoc-learning
+# Edits were made for bug fixes and additions.
 
 from rl_env import Agent
 import random
@@ -154,7 +153,6 @@ def get_max_fireworks(observation):
 
 
 class Ruleset():
-
   @staticmethod
   def discard_oldest_first(observation):
     if (observation['information_tokens']) < 8:
@@ -195,6 +193,18 @@ class Ruleset():
       if not eventually_playable:
         return {'action_type': 'DISCARD', 'card_index': card_index}
     return None
+
+  # MB: osawa discard, if not, discard probably useless .75, if not, oldest
+  @staticmethod
+  def discard_best(observation):
+    if observation['information_tokens'] == 8:
+      return None
+    action = Ruleset.osawa_discard(observation)
+    if action is None:
+      action = Ruleset.discard_probably_useless_factory(0.75)(observation)
+    if action is None:
+      action = Ruleset.discard_oldest_first(observation)
+    return action
 
   # Note: this rule only looks at the next player on purpose, for compatibility with the Fossgalaxy implementation. Prioritizes color
   @staticmethod
@@ -438,13 +448,11 @@ class Ruleset():
     def play_probably_useless_treshold(observation):
       if observation['information_tokens'] < 8:
         probability_useless = get_probability_useless(observation)
-        # print("probability useless" +str(probability_useless))
         card_index = np.argmax(probability_useless)
         if probability_useless[card_index] >= treshold:
           action = {'action_type': 'DISCARD', 'card_index': card_index}
           return action
       return None
-
     return play_probably_useless_treshold
 
   # "Hail Mary" rule used by agent Piers

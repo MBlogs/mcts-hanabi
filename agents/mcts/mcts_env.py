@@ -3,7 +3,6 @@ import enum
 from rl_env import HanabiEnv
 from agents.mcts.mcts_determinizer import MCTSDeterminizer
 from pyhanabi import HanabiMove
-from pyhanabi import HanabiEndOfGameType
 import random
 
 class DetermineType(enum.IntEnum):
@@ -54,6 +53,8 @@ class MCTSEnv(HanabiEnv):
       if debug: print(f"mcts_env.step: Player {action_player} dealt random card")
 
     # IF RESTORING HANDS
+    if debug: print(f"mcts_env.step: Determine strategy is {self.determine_type}")
+
     if self.determine_type == DetermineType.RESTORE:
       # If the acting player was not me, restore as best as possible their hand
       if action_player != self.mcts_player:
@@ -89,7 +90,7 @@ class MCTSEnv(HanabiEnv):
     """Custom reward function for use during RIS-MCTS rollouts
     This is therefore not the same as the overall game score
     """
-    score = self.fireworks_score() - self.record_moves.regret()
+    score = self.fireworks_score() - 2*self.record_moves.regret()
     return score
 
   def return_hand(self,player):

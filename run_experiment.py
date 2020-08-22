@@ -3,7 +3,7 @@
 from __future__ import print_function
 import sys
 import getopt
-import rl_env
+from rl_env import make
 from agents.rule_based.rule_based_agents import VanDenBerghAgent
 from agents.rule_based.rule_based_agents import OuterAgent
 from agents.rule_based.rule_based_agents import PiersAgent
@@ -23,7 +23,7 @@ class Runner(object):
     """Initialize runner."""
     self.flags = flags
     self.agent_config = {'players': flags['players'], 'player_id':0} #player_id changes per Agent
-    self.environment = rl_env.make('Hanabi-Full', num_players=flags['players'])
+    self.environment = make('Hanabi-Full', num_players=flags['players'])
     self.agent_classes = [AGENT_CLASSES[agent_class] for agent_class in flags['agent_classes']]
 
 
@@ -68,9 +68,9 @@ class Runner(object):
     print("]")
     print(f",stats_keys={list(game_stats[0].keys())}")
     #print(f",game_stats = {game_stats}")
-    print(f",game_stats_simple = {self.simplify_stats(game_stats)}")
+    print(f",game_stats = {self.simplify_stats(game_stats)}")
     #print(f",player_stats = {player_stats}")
-    print(f",player_stats_simple = {[self.simplify_stats(p) for p in player_stats]}")
+    print(f",player_stats = {[self.simplify_stats(p) for p in player_stats]}")
     avg_score = sum([g["score"] for g in game_stats]) / flags['num_episodes']
     avg_time = sum([p["elapsed_time"]/p["moves"] for p in player_stats[0]]) / flags['num_episodes']
     print(f",avg_score={avg_score}")

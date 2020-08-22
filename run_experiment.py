@@ -22,7 +22,7 @@ class Runner(object):
   def __init__(self, flags):
     """Initialize runner."""
     self.flags = flags
-    self.agent_config = {'players': flags['players'], 'player_id':0} #player_id changes per Agent
+    self.agent_config = {'players': flags['players'], 'player_id':0, 'mcts_types':flags['mcts_types']}
     self.environment = make('Hanabi-Full', num_players=flags['players'])
     self.agent_classes = [AGENT_CLASSES[agent_class] for agent_class in flags['agent_classes']]
 
@@ -33,12 +33,13 @@ class Runner(object):
     player_stats = []
     agents = []
     # MB: Pass absolute player_id upfront to all agents (MCTS needs this for forward model)
-    print(",scores=[", end="")
 
     for i in range(len(self.agent_classes)):
-      self.agent_config.update({'player_id': i})
+      self.agent_config.update({'player_id': i}) #change player_id
       agents.append(self.agent_classes[i](self.agent_config))
       player_stats.append([])
+
+    print(",scores=[", end="")
 
     for episode in range(flags['num_episodes']):
       done = False
@@ -72,10 +73,10 @@ class Runner(object):
     #print(f",player_stats = {player_stats}")
     print(f",player_stats = {[self.simplify_stats(p) for p in player_stats]}")
     avg_score = sum([g["score"] for g in game_stats]) / flags['num_episodes']
-    avg_time = sum([p["elapsed_time"]/p["moves"] for p in player_stats[0]]) / flags['num_episodes']
+    avg_time = sum([p["elapsed_time"]/max(p["moves"], 1) for p in player_stats[0]]) / flags['num_episodes']
     print(f",avg_score={avg_score}")
     print(f",avg_time={avg_time}")
-    print(")")
+    print("),")
 
   def simplify_stats(self, stats):
     """Extract just the numbers from the stats"""
@@ -85,35 +86,42 @@ class Runner(object):
     self.environment.print_state()
 
 if __name__ == "__main__":
-  # MB: If agent_classes list supplied, take that. Else, replicate same_agent_class however many times
-  flags = {'players': 3, 'num_episodes': 250, 'agent_classes': [],'agents': 'LegalRandomAgent'}
+  # MB: agent: Player of interest. agent: fill in remaining spaces
+  flags = {'players': 3, 'num_episodes': 10
+    ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
+    , 'mcts_types': '123'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',
-                                      'agents='])
+                                      'agent=',
+                                      'agents=',
+                                      'mcts_types='])
   if arguments:
     sys.exit('usage: rl_env_example.py [options]\n'
              '--players       number of players in the game.\n'
              '--num_episodes  number of game episodes to run.\n'
-             '--agent_class   {}'.format(' or '.join(AGENT_CLASSES.keys())))
-
+             '--agent  class name of agent of interest {}\n'
+             '--agents  class name of agent to play off: {}\n'
+             '--mcts_types 00000 type of each mcts agent (if any) \n'
+             '0 default, 1 REPLACE, 2 NONE, 3 No branching rules'
+             ''.format(' or '.join(AGENT_CLASSES.keys())))
 
   # Convert any extra options into the flags
   for flag, value in options:
     flag = flag[2:]  # Strip leading --.
     flags[flag] = type(flags[flag])(value)
 
-  # Handle option flags: If agent provided, pave over agent_classes
-  assert flags['agents'] in AGENT_CLASSES.keys()
-  flags['agent_classes'] = [flags['agents'] for _ in range(flags["players"])]
+  # agent_classes lists the players of the game
+  flags['agent_classes'] = [flags['agent']] + [flags['agents'] for _ in range(1, flags["players"])]
 
   # Agents list needs to be same size as number of players declared
   if len(flags['agent_classes']) != flags['players']:
-    sys.exit('Number of agent classes not same as number of players')
+    sys.exit(f'Number of agent classes:{len(flags["agent_classes"])} not same as number of players: {flags["players"]}')
 
   #Print the config
-  print("Experiment(")
-  print("flags = {}".format(flags))
+  print("experiments = [Experiment(")
+  print(f"flags = {flags}")
 
   runner = Runner(flags)
   runner.run()
+  print("]")

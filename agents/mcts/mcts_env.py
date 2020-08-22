@@ -1,15 +1,22 @@
 import pyhanabi
+import enum
 from rl_env import HanabiEnv
 from agents.mcts.mcts_determinizer import MCTSDeterminizer
 from pyhanabi import HanabiMove
 from pyhanabi import HanabiEndOfGameType
 import random
 
+class DetermineType(enum.IntEnum):
+  """Move types, consistent with hanabi_lib/hanabi_move.h."""
+  RESTORE = 0
+  REPLACE = 1
+  NONE = 2
 
 class MCTSEnv(HanabiEnv):
   def __init__(self, config):
     # This is the forward model for a particular MCTS player. Note it's position
     self.mcts_player = config['mcts_player']
+    self.determine_type = config["determine_type"]
     self.remember_hand = None
     self.determiniser = MCTSDeterminizer()
     super().__init__(config)
@@ -46,17 +53,21 @@ class MCTSEnv(HanabiEnv):
       self.state.deal_random_card()
       if debug: print(f"mcts_env.step: Player {action_player} dealt random card")
 
-    # If the acting player was not me, restore as best as possible their hand
-    if action_player != self.mcts_player:
-     self.restore_hand(action_player, self.remember_hand, actioned_card, move.card_index())
-     if debug: print(f"mcts_env.step: Player {action_player} restored hand")
+    # IF RESTORING HANDS
+    if self.determine_type == DetermineType.RESTORE:
+      # If the acting player was not me, restore as best as possible their hand
+      if action_player != self.mcts_player:
+        self.restore_hand(action_player, self.remember_hand, actioned_card, move.card_index())
+      if debug: print(f"mcts_env.step: Player {action_player} restored hand")
 
-    # Now we're onto the  next player. If not me, remember, then replace their hand
-    if self.state.cur_player() != self.mcts_player:
-      if debug: print(f"mcts_env.step: Player {self.state.cur_player()} saving hand")
-      self.remember_hand = self.state.player_hands()[self.state.cur_player()]
-      self.replace_hand(self.state.cur_player())
-      if debug: print(f"mcts_env.step: Player {self.state.cur_player()} replaced hand")
+    # IF REPLACING HANDS
+    if self.determine_type != DetermineType.NONE:
+      # Now we're onto the  next player. If not me, remember, then replace their hand
+      if self.state.cur_player() != self.mcts_player:
+        if debug: print(f"mcts_env.step: Player {self.state.cur_player()} saving hand")
+        self.remember_hand = self.state.player_hands()[self.state.cur_player()]
+        self.replace_hand(self.state.cur_player())
+        if debug: print(f"mcts_env.step: Player {self.state.cur_player()} replaced hand")
 
     if debug: self.print_state()
     # Now make observation, as action player hand is restored and new player hand is redeterminised
@@ -209,7 +220,7 @@ class MCTSEnv(HanabiEnv):
       if debug: print(f"mcts_env.restore_hand: Player {player} hand now {self.state.player_hands()[player]}")
 
 
-def make(environment_name="Hanabi-Full", num_players=2, mcts_player=0, pyhanabi_path=None):
+def make(environment_name="Hanabi-Full", num_players=2, mcts_player=0, determine_type=0, pyhanabi_path=None):
   """Make an environment.
 
   Args:
@@ -241,6 +252,8 @@ def make(environment_name="Hanabi-Full", num_players=2, mcts_player=0, pyhanabi_
                 num_players,
             "mcts_player":
                 mcts_player,
+            "determine_type":
+                determine_type,
             "max_information_tokens":
                 8,
             "max_life_tokens":

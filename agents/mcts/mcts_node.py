@@ -47,7 +47,7 @@ class MCTSNode(Node):
     # MB: States are determined by the moves to get there
     # MB: So this is technically only one version of possible children
     # MB: Node needs a focused state to get next possible moves from
-    debug = True
+    debug = False
 
     assert self.focused_state is not None
     if self.is_terminal():
@@ -55,9 +55,12 @@ class MCTSNode(Node):
       return []
 
     # Rulesets returns in action dict form. Return these for mcts_agent to build into moves
-    actions_by_rules = [rule(observation) for rule in self.rules]
-    if debug: print(f"mcts_node.find_children: Found actions: {actions_by_rules}")
-    children = [action for action in actions_by_rules if action is not None]
+    if self.rules is not None:
+      actions_by_rules = [rule(observation) for rule in self.rules]
+      if debug: print(f"mcts_node.find_children: Found actions: {actions_by_rules}")
+      children = [action for action in actions_by_rules if action is not None]
+    else:
+      children = self.focused_state.legal_moves()
 
     # Note: Could return duplicates
     return children

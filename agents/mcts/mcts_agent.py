@@ -7,42 +7,74 @@ from agents.mcts import mcts_env
 from agents.mcts.mcts_node import MCTSNode
 from agents.rule_based.ruleset import Ruleset
 from agents.rule_based.rule_based_agents import VanDenBerghAgent
-from agents.rule_based.rule_based_agents import FlawedAgent
+from agents.rule_based.rule_based_agents import OuterAgent
+from agents.rule_based.rule_based_agents import PiersAgent
+from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
+from agents.rule_based.rule_based_agents import FlawedAgent
 
-AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent, 'FlawedAgent': FlawedAgent}
+AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent
+                  , 'OuterAgent':OuterAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
+                  , 'LegalRandomAgent':LegalRandomAgent}
 
 class MCTSAgent(Agent):
   """Agent based on Redeterminizing Information Set Monte Carlo Tree Search"""
 
-  def __init__(self, config, **kwargs):
+  def __init__(self, config):
     """Initialize the agent."""
-    # Dictionary of lists of nodes
+    # Setup for tree node tracking
     self.children = dict()
     self.Q = defaultdict(int)
     self.N = defaultdict(int)
     self.root_node = None
     self.root_state = None
-    # Make use of special MCTSEnv that allows redterminizing hands during rollouts
-    self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id'])
-    self.max_information_tokens = config.get('information_tokens', 8)
-    # Limits on the time or number of rollouts (whatever is first)
-    self.max_time_limit = 1000 # in ms
-    self.max_rollout_num = 10
+
+    # Assign values based on config
+    self.max_time_limit =  10000# in ms
+    self.max_rollout_num = 100
     self.max_simulation_steps = config["players"]
     self.agents = [VanDenBerghAgent(config) for _ in range(config["players"])]
     self.exploration_weight = 2.5
-    # Determines the only actions to consider when branching
-    self.rules = True
-    self.rules = [Ruleset.tell_most_information_factory(True) # TellMostInformation
-      ,Ruleset.tell_anyone_useful_card # TellAnyoneUseful
-      ,Ruleset.tell_dispensable_factory(8)
-      ,Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
-      ,Ruleset.tell_dispensable_factory(1)  # Hint full inforamtion about a disardable card
-      ,Ruleset.tell_anyone_useful_card  # Hint full information about an unplayable (but not discardable) card
-      ,Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
-      ,Ruleset.play_probably_safe_factory(0.4, False)  # Play card with 40% certainty and <5 cards left
-      ,Ruleset.discard_probably_useless_factory(0)]
+    self.rules =  [Ruleset.tell_most_information_factory(True)  # TellMostInformation
+        , Ruleset.tell_anyone_useful_card  # TellAnyoneUseful
+        , Ruleset.tell_dispensable_factory(8)
+        , Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
+        , Ruleset.tell_dispensable_factory(1)  # Hint full inforamtion about a disardable card
+        , Ruleset.tell_anyone_useful_card  # Hint full information about an unplayable (but not discardable) card
+        , Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
+        , Ruleset.play_probably_safe_factory(0.4, False)  # Play card with 40% certainty and <5 cards left
+        , Ruleset.discard_probably_useless_factory(0)]
+    self.determine_type = mcts_env.DetermineType.RESTORE
+    self.mcts_type = config["mcts_types"][config['player_id']]
+    self.edit_mcts_config(self.mcts_type)
+    # Make use of special MCTSEnv that allows redterminizing hands during rollouts
+    self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id']
+                                     ,determine_type = self.determine_type)
+    self.max_information_tokens = config.get('information_tokens', 8)
+    print(self.get_mcts_config())
+
+  def edit_mcts_config(self, mcts_type):
+    """Create the default or adjusted config"""
+    if mcts_type == 0: # Default
+      pass
+    elif mcts_type == 1: # Determinisation: ReplaceOnly
+      self.determine_type = mcts_env.DetermineType.REPLACE
+    elif mcts_type == 2: # Determinisation: None
+      self.determine_type = mcts_env.DetermineType.NONE
+    elif mcts_type == 3: # No branching rules
+      self.rules = None
+
+  def get_mcts_config(self):
+    return f"mcts_config = {{max_time_limit:{self.max_time_limit}, self.max_rollout_num:{self.max_rollout_num}" \
+           f", max_simulation_steps:{self.max_simulation_steps}, agents:{self.agents}" \
+           f", exploration_weight:{self.exploration_weight}, rules:{self.rules}" \
+           f", redeterminisation_strategy:{self.determine_type},}}"
+
+  def __str__(self):
+    return 'MCTSAgent'+self.mcts_type
+
+  def __repr__(self):
+    return str(self)
 
   def act(self, observation, state):
     debug = False
@@ -166,13 +198,14 @@ class MCTSAgent(Agent):
     if node in self.children:
       if debug: print(f"mcts_agent._expand: Oops, asked to expand an already known node: {node}")
       return
-    # ToDo: Update children of this node. Some new moves may be promising in this determinsation
     if debug: print(f"mcts_agent._expand: Expanding children for node: {node}")
-    actions = node.find_children(observation)
-    moves = set([self.environment._build_move(action) for action in actions])
+
+    moves = node.find_children(observation)
+    # Need it in move form. If in action form, convert them
+    if len(moves) > 0 and isinstance(moves[0], dict):
+      moves = set([self.environment._build_move(action) for action in moves])
     self.children[node] = [MCTSNode(node.moves+(move,), self.rules) for move in moves]
     if debug: print(f"mcts_agent._expand: Took assigned node {node} and updated children {self.children[node]}")
-
 
   def _simulate(self, node):
     "MB: Returns the reward for a random simulation (to completion) of `node`"

@@ -29,13 +29,14 @@ class MCTSAgent(Agent):
     self.N = defaultdict(int)
     self.root_node = None
     self.root_state = None
-
+    self.player_id = config["player_id"]
     # Assign values based on config
     self.max_time_limit =  10000# in ms
     self.max_rollout_num = 100
     self.max_simulation_steps = config["players"]
     self.agents = [VanDenBerghAgent(config) for _ in range(config["players"])]
     self.exploration_weight = 2.5
+    self.max_depth = 100
     self.rules =  [Ruleset.tell_most_information_factory(True)  # TellMostInformation
         , Ruleset.tell_anyone_useful_card  # TellAnyoneUseful
         , Ruleset.tell_dispensable_factory(8)
@@ -69,18 +70,29 @@ class MCTSAgent(Agent):
       self.rules = None
     elif mcts_type == '3': # SCORE
       self.score_type = mcts_env.ScoreType.SCORE
-    elif mcts_type == '4': # RIS SCORE VDB No rules (Re, Rules, VDB, SCORE)
+    elif mcts_type == '4': # SCORE VDB No rules (Re, Rules, VDB, SCORE)
       self.score_type = mcts_env.ScoreType.SCORE
       self.rules = None
     elif mcts_type == '5':  # RIS SCORE VDB No rules (Re, Rules, VDB, SCORE)
       self.score_type = mcts_env.ScoreType.SCORE
       self.rules = None
+    elif mcts_type == 'a':  # RIS 1depth
+      self.max_depth = 1
+    elif mcts_type == 'b':
+      self.max_depth = 1
+      self.agents[0] = FlawedAgent(config)
+      self.agents[1] = PiersAgent(config)
+      self.agents[2] = PiersAgent(config)
+      self.determine_type = mcts_env.DetermineType.NONE
+    elif mcts_type == 'x': #quick agent
+      self.max_time_limit = 1000
+
 
   def _get_mcts_config(self):
-    return f"mcts_config = {{'max_time_limit':{self.max_time_limit}, 'max_rollout_num':{self.max_rollout_num}" \
-           f", 'max_simulation_steps':{self.max_simulation_steps}, 'agents':{self.agents}" \
+    return f"{{'max_time_limit':{self.max_time_limit}, 'max_rollout_num':{self.max_rollout_num}" \
+           f",'agents':'{self.agents}', 'max_simulation_steps':{self.max_simulation_steps}, 'max_depth':{self.max_depth}" \
            f", 'determine_type':{self.determine_type}, 'score_type':{self.score_type}" \
-           f", 'exploration_weight':{self.exploration_weight}, 'rules':{self.rules}}}" \
+           f", 'exploration_weight':{self.exploration_weight}, 'rules':'{self.rules}'}}," \
 
   def __str__(self):
     return 'MCTSAgent'+str(self.mcts_type)
@@ -134,11 +146,11 @@ class MCTSAgent(Agent):
 
     # Now at the end of training
     if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
-    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
-    print(f"mcts_agent.act: Chose node {best_node}")
+    #print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 
@@ -153,6 +165,7 @@ class MCTSAgent(Agent):
     if debug: print(f"MB: mcts_agent._do_rollout: Leaf node to roll out from is {leaf}")
 
     # Try to get down to the selected node to roll out from it
+    depth = 0
     for move in leaf.moves:
       # If move not legal on this determinisation cut path here are backpropogate
       if (not any(move == legal_move for legal_move in self.environment.state.legal_moves())):
@@ -163,9 +176,14 @@ class MCTSAgent(Agent):
       observations, reward, done, unused_info = self.environment.step(move)
       observation = observations['player_observations'][self.environment.state.cur_player()]
       if debug: print(self.environment.state)
+      depth += 1
+      if depth > self.max_depth:
+        break
 
     leaf.focused_state = self.environment.state
-    self._expand(leaf, observation)
+    # Don't expand if we didn't get to a root
+    if not depth > self.max_depth:
+      self._expand(leaf, observation)
     # Simulate from this point
     reward = self._simulate(leaf)
     self._backpropagate(path, reward)

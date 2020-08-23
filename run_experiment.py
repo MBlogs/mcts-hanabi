@@ -41,6 +41,7 @@ class Runner(object):
       agents.append(self.agent_classes[i](self.agent_config))
       player_stats.append([])
 
+    print("]") # end mcts_config
     print(",scores=[", end="")
     errors = 0
 
@@ -68,9 +69,6 @@ class Runner(object):
         game_stats.append(self.environment.game_stats())
         for i in range(len(self.agent_classes)):
           player_stats[i].append(self.environment.player_stats(i))
-        #TEMP TEMP TEMPT
-        if self.environment.fireworks_score() < 13:
-          return
       except Exception as e:
         #print(e)
         errors += 1
@@ -85,7 +83,7 @@ class Runner(object):
     avg_time = sum([p["elapsed_time"]/max(p["moves"], 1) for p in player_stats[0]]) / flags['num_episodes']
     print(f",avg_score={avg_score}")
     print(f",avg_time={avg_time}")
-    print(f"errors={errors}")
+    print(f",errors={errors}")
     print("),")
 
   def simplify_stats(self, stats):
@@ -97,9 +95,9 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
-  flags = {'players': 3, 'num_episodes': 10
+  flags = {'players': 3, 'num_episodes': 5
     ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
-    , 'mcts_types': '00000'}
+    , 'mcts_types': '000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',
@@ -130,6 +128,7 @@ if __name__ == "__main__":
   #Print the config
   print("experiments = [Experiment(")
   print(f"flags = {flags}")
+  print(",mcts_configs = [")
   runner = Runner(flags)
   runner.run()
   print("]")

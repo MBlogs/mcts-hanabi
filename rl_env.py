@@ -127,7 +127,7 @@ class HanabiEnv(Environment):
     return self.game.max_moves()
 
   def step(self, action):
-    debug = True
+    debug = False
     elapsed_time = int(round((time.time() - self.start_time)*1000))
 
     if isinstance(action, dict):

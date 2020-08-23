@@ -11,6 +11,7 @@ class RulebasedAgent(Agent):
     self.histogram = [0 for i in range(len(rules) + 1)]
 
   def get_move(self, observation):
+    debug = True
     if observation['current_player_offset'] == 0:
       for index, rule in enumerate(self.rules):
         action = rule(observation)

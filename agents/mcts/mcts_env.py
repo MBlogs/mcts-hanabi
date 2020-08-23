@@ -90,7 +90,7 @@ class MCTSEnv(HanabiEnv):
     """Custom reward function for use during RIS-MCTS rollouts
     This is therefore not the same as the overall game score
     """
-    score = self.fireworks_score() - 2*self.record_moves.regret()
+    score = self.fireworks_score() - self.record_moves.regret()
     return score
 
   def return_hand(self,player):

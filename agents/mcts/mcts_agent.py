@@ -8,13 +8,14 @@ from agents.mcts.mcts_node import MCTSNode
 from agents.rule_based.ruleset import Ruleset
 from agents.rule_based.rule_based_agents import VanDenBerghAgent
 from agents.rule_based.rule_based_agents import OuterAgent
+from agents.rule_based.rule_based_agents import InnerAgent
 from agents.rule_based.rule_based_agents import PiersAgent
 from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent
-                  , 'OuterAgent':OuterAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
+                  , 'OuterAgent':OuterAgent, 'InnerAgent':InnerAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
                   , 'LegalRandomAgent':LegalRandomAgent}
 
 class MCTSAgent(Agent):
@@ -40,7 +41,6 @@ class MCTSAgent(Agent):
         , Ruleset.tell_dispensable_factory(8)
         , Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
         , Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
-        , Ruleset.play_probably_safe_factory(0.4, False)  # Play card with 40% certainty and <5 cards left
         , Ruleset.discard_best]
     self.determine_type = mcts_env.DetermineType.RESTORE
     self.mcts_type = int(config["mcts_types"][config['player_id']])
@@ -124,11 +124,11 @@ class MCTSAgent(Agent):
 
     # Now at the end of training
     if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
-    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
-    print(f"mcts_agent.act: Chose node {best_node}")
+    #print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 

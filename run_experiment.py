@@ -6,6 +6,7 @@ import getopt
 from rl_env import make
 from agents.rule_based.rule_based_agents import VanDenBerghAgent
 from agents.rule_based.rule_based_agents import OuterAgent
+from agents.rule_based.rule_based_agents import InnerAgent
 from agents.rule_based.rule_based_agents import PiersAgent
 from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
@@ -13,7 +14,7 @@ from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.mcts.mcts_agent import MCTSAgent
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent, 'MCTSAgent': MCTSAgent
-                  , 'OuterAgent':OuterAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
+                  , 'OuterAgent':OuterAgent, 'InnerAgent':InnerAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
                   , 'LegalRandomAgent':LegalRandomAgent}
 
 class Runner(object):
@@ -32,6 +33,7 @@ class Runner(object):
     game_stats = []
     player_stats = []
     agents = []
+
     # MB: Pass absolute player_id upfront to all agents (MCTS needs this for forward model)
 
     for i in range(len(self.agent_classes)):
@@ -40,32 +42,36 @@ class Runner(object):
       player_stats.append([])
 
     print(",scores=[", end="")
+    errors = 0
 
     for episode in range(flags['num_episodes']):
       done = False
       observations = self.environment.reset()
-      while not done:
-        for agent_id, agent in enumerate(agents):
-          observation = observations['player_observations'][agent_id]
-          # MB: MCTSAgent needs to be passed full state to act as base for MCTS
-          # MB: Note that it replaces it's hand before each rollout so not 'cheating' by knowing the full state
-          if isinstance(agent, MCTSAgent):
-            action = agent.act(observation, self.environment.state)
-          else:
-            action = agent.act(observation)
+      try:
+        while not done:
+          for agent_id, agent in enumerate(agents):
+            observation = observations['player_observations'][agent_id]
+            # MB: MCTSAgent needs to be passed full state to act as base for MCTS
+            # MB: Note that it replaces it's hand before each rollout so not 'cheating' by knowing the full state
+            if isinstance(agent, MCTSAgent):
+              action = agent.act(observation, self.environment.state)
+            else:
+              action = agent.act(observation)
 
-          if observation['current_player'] == agent_id:
-            assert action is not None
-            current_player_action = action
-          else:
-            assert action is None
+            if observation['current_player'] == agent_id:
+              assert action is not None
+              current_player_action = action
+            else:
+              assert action is None
+          observations, reward, done, unused_info = self.environment.step(current_player_action)
+        print(self.environment.fireworks_score(), end=",")
+        game_stats.append(self.environment.game_stats())
+        for i in range(len(self.agent_classes)):
+          player_stats[i].append(self.environment.player_stats(i))
+      except Exception as e:
+        print(e)
+        errors += 1
 
-        observations, reward, done, unused_info = self.environment.step(current_player_action)
-
-      print(self.environment.fireworks_score(), end=",")
-      game_stats.append(self.environment.game_stats())
-      for i in range(len(self.agent_classes)):
-        player_stats[i].append(self.environment.player_stats(i))
     print("]")
     print(f",stats_keys={list(game_stats[0].keys())}")
     #print(f",game_stats = {game_stats}")
@@ -76,6 +82,7 @@ class Runner(object):
     avg_time = sum([p["elapsed_time"]/max(p["moves"], 1) for p in player_stats[0]]) / flags['num_episodes']
     print(f",avg_score={avg_score}")
     print(f",avg_time={avg_time}")
+    print(f"errors={errors}")
     print("),")
 
   def simplify_stats(self, stats):
@@ -87,8 +94,8 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
-  flags = {'players': 3, 'num_episodes': 1
-    ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
+  flags = {'players': 3, 'num_episodes': 5
+    ,'agent':'LegalRandomAgent', 'agents':'OuterAgent'
     , 'mcts_types': '000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
@@ -121,7 +128,6 @@ if __name__ == "__main__":
   #Print the config
   print("experiments = [Experiment(")
   print(f"flags = {flags}")
-
   runner = Runner(flags)
   runner.run()
   print("]")

@@ -7,10 +7,11 @@ class RecordMoves(object):
 
   def __init__(self, players):
     self._stat_list = ["score", "moves"
-      , "regret", "regret_discard", "regret_play_fail", "regret_play_endgame"
+      , "regret", "regret_discard_critical", "regret_play_fail", "regret_play_fail_critical", "regret_play_fail_endgame"
       , "discard", "discard_critical", "discard_useful", "discard_safe"
-      , "play", "play_success", "play_fail", "play_endgame"
-      , "information", "information_color", "information_rank", "elapsed_time"]
+      , "play", "play_success", "play_fail", "play_fail_critical", "play_fail_endgame"
+      , "information", "information_color", "information_rank"
+      , "elapsed_time"]
     self.recorded_observation = None
     self.players = players
     self.game_stats = self.default_stats()
@@ -49,7 +50,7 @@ class RecordMoves(object):
         self._update_stat("discard_critical", 1, action_player)
         regret = self._critical_card_regret(observation, self.recorded_observation)
         self._update_stat("regret", regret, action_player)
-        self._update_stat("regret_discard", regret, action_player)
+        self._update_stat("regret_discard_critical", regret, action_player)
         if debug: print(f"record_moves.update: Regret: {regret} by Player {action_player}, move {move} with card {card}")
       # Was it a safe discard?
       elif self._safe_discard(card, observation):
@@ -64,21 +65,23 @@ class RecordMoves(object):
       if observation["life_tokens"] < self.recorded_observation["life_tokens"]:
         self._update_stat("play_fail", 1, action_player)
         card = observation["discard_pile"][-1]
-        # If it ended the game early, we regret the full missed potential (even if we might not get there)
+        # If it ended the game early, increment play_fail_endgame and regret is missed max score
         if observation["life_tokens"] == 0:
-          self._update_stat("play_endgame", 1, action_player)
+          self._update_stat("play_fail_endgame", 1, action_player)
           regret = self._end_game_regret(observation, self.recorded_observation)
           self._update_stat("regret", regret, action_player)
-          self._update_stat("regret_play_endgame", regret, action_player)
+          self._update_stat("regret_play_fail", regret, action_player)
+          self._update_stat("regret_play_fail_endgame", regret, action_player)
           if debug: print(f"record_moves.update: Regret: {regret} by Player {action_player}, move {move} with card {card}")
         # If played a card (which gets discarded) that was critical, regret how much we cut firework off
         elif self._critical_discard(card, observation):
+          self._update_stat("play_fail_critical", 1, action_player)
           regret = self._critical_card_regret(observation, self.recorded_observation)
           self._update_stat("regret", regret, action_player)
           self._update_stat("regret_play_fail", regret, action_player)
+          self._update_stat("regret_play_fail_critical", regret, action_player)
           if debug: print(f"record_moves.update: Regret: {regret} by Player {action_player}, move {move} with card {card}")
         # If it actually ended the game, override regret with total missed potential
-
       else:
         self._update_stat("play_success", 1, action_player)
 

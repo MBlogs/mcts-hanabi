@@ -13,6 +13,7 @@ from agents.rule_based.rule_based_agents import PiersAgent
 from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
+import pyhanabi
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent
                   , 'OuterAgent':OuterAgent, 'InnerAgent':InnerAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
@@ -37,6 +38,10 @@ class MCTSAgent(Agent):
     self.agents = [VanDenBerghAgent(config) for _ in range(config["players"])]
     self.exploration_weight = 2.5
     self.max_depth = 100
+    self.determine_type = mcts_env.DetermineType.RESTORE
+    self.score_type = mcts_env.ScoreType.REGRET
+    self.playable_now_convention = False # Agent will follow playable now convention
+    self.playable_now_convention_sim = False # Agents in simulation follow playable now convention
     self.rules =  [Ruleset.tell_most_information_factory(True)  # TellMostInformation
         , Ruleset.tell_anyone_useful_card  # TellAnyoneUseful
         , Ruleset.tell_dispensable_factory(8)
@@ -46,8 +51,6 @@ class MCTSAgent(Agent):
         , Ruleset.play_probably_safe_factory(0.7, False)
         , Ruleset.play_probably_safe_late_factory(0.4, 5)
         , Ruleset.discard_most_confident]
-    self.determine_type = mcts_env.DetermineType.RESTORE
-    self.score_type = mcts_env.ScoreType.REGRET
     self.mcts_type = config["mcts_types"][config['player_id']]
     self._edit_mcts_config(self.mcts_type, config)
     # Make use of special MCTSEnv that allows redterminizing hands during rollouts
@@ -76,23 +79,32 @@ class MCTSAgent(Agent):
     elif mcts_type == '5':  # RIS SCORE VDB No rules (Re, Rules, VDB, SCORE)
       self.score_type = mcts_env.ScoreType.SCORE
       self.rules = None
-    elif mcts_type == 'a':  # RIS 1depth
-      self.max_depth = 1
-    elif mcts_type == 'b':
-      self.max_depth = 1
-      self.agents[0] = FlawedAgent(config)
-      self.agents[1] = PiersAgent(config)
-      self.agents[2] = PiersAgent(config)
+    elif mcts_type == 'a':  # mybest_c
+      self.playable_now_convention = True
+      self.playable_now_convention_sim = True
+    elif mcts_type == 'b':  # mybest_noc
+      pass
+    elif mcts_type == 'b':  # litmatch
+      self.score_type = mcts_env.ScoreType.SCORE
+    elif mcts_type == 'c':  # nodet
+      self.score_type = mcts_env.ScoreType.SCORE
+      self.determine_type = mcts_env.DetermineType.NONE
+    elif mcts_type == 'd':  # norules
+      self.score_type = mcts_env.ScoreType.SCORE
+      self.rules = None
+    elif mcts_type == 'e':  # norestriction
+      self.score_type = mcts_env.ScoreType.SCORE
+      self.rules = None
+      self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
       self.determine_type = mcts_env.DetermineType.NONE
     elif mcts_type == 'x': #quick agent
       self.max_time_limit = 1000
 
-
   def _get_mcts_config(self):
     return f"{{'max_time_limit':{self.max_time_limit}, 'max_rollout_num':{self.max_rollout_num}" \
            f",'agents':'{self.agents}', 'max_simulation_steps':{self.max_simulation_steps}, 'max_depth':{self.max_depth}" \
-           f", 'determine_type':{self.determine_type}, 'score_type':{self.score_type}" \
-           f", 'exploration_weight':{self.exploration_weight}, 'rules':'{self.rules}'}}," \
+           f", 'determine_type':{self.determine_type}, 'score_type':{self.score_type}, 'exploration_weight':{self.exploration_weight}" \
+           f",'playable_now_convention':{self.playable_now_convention},'playable_now_convention_sim':{self.playable_now_convention_sim}, 'rules':'{self.rules}'}}," \
 
   def __str__(self):
     return 'MCTSAgent'+str(self.mcts_type)
@@ -104,6 +116,12 @@ class MCTSAgent(Agent):
     debug = False
     if observation['current_player_offset'] != 0:
       return None
+
+    # Playable Now convention: If I was told a single information about a single card, and it could be playable, do it
+    if self.playable_now_convention:
+      action = Ruleset.playable_now_convention(observation)
+      if action is not None:
+        return action
 
     self._reset(state)
 
@@ -254,14 +272,20 @@ class MCTSAgent(Agent):
         observation = observations['player_observations'][agent_id]
         if observation['current_player'] == agent_id:
           current_player_action = agent.act(observation)
-          if debug: print(f"mcts_agent.rollout_game: Agent {agent_id} completed action {current_player_action}")
+
+          # Playable now convention
+          if self.playable_now_convention_sim:
+            playable_now_action = Ruleset.playable_now_convention(observation)
+            if playable_now_action is not None:
+              current_player_action == playable_now_action
+
       observations, reward, done, unused_info = self.environment.step(current_player_action)
+      if debug: print(f"mcts_agent.rollout_game: Agent {agent_id} completed action {current_player_action}")
       steps += 1
       if not done:
         done = steps >= self.max_simulation_steps
 
     return reward
-
 
   def _backpropagate(self, path, reward):
     "Send the reward back up to the ancestors of the leaf"

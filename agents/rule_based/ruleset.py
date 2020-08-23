@@ -19,6 +19,7 @@ from rl_env import Agent
 import random
 import numpy as np
 import pyhanabi
+from pyhanabi import HanabiMoveType
 
 global colors
 colors = ['R', 'Y', 'G', 'W', 'B']
@@ -53,7 +54,6 @@ def useless_card(card, fireworks, max_fireworks):
   if card['rank'] >= max_fireworks[card['color']]:
     return True
   return False
-
 
 def get_plausible_cards(observation, player_offset, hand_index):
   card_knowledge = observation['pyhanabi'].card_knowledge()[player_offset]
@@ -104,7 +104,6 @@ def get_card_playability(observation, player_offset=0):
     playability_array[hand_index] = playable_possibilities / total_possibilities
 
   return playability_array
-
 
 def get_probability_useless(observation, player_offset=0):
   visible_cards = get_visible_cards(observation, player_offset)
@@ -172,6 +171,34 @@ def get_max_fireworks(observation):
 
 
 class Ruleset():
+  #MB: For RIS-MCTS
+  @staticmethod
+  def playable_now_convention(observation):
+    fireworks = observation["fireworks"]
+    history_last_moves = observation["pyhanabi"].last_moves()
+    # Pull list of non-deal moves
+    history_moves = [h for h in history_last_moves if h.move().to_dict()["action_type"] not in ["DEAL","RETURN","DEAL_SPECIFIC",]]
+    if len(history_moves) == 0:
+      return None
+    # Take last move and convert to action format
+    history_move = history_moves[0]
+    card_info_revealed = history_move.card_info_newly_revealed()
+    action = history_move.move().to_dict()
+    #print(f"Ruleset.playable_now_convention: Last move was {action}")
+    #print(f"Ruleset.playable_now_convention: card_info_revealed was {card_info_revealed}")
+    if card_info_revealed:
+      if action["target_offset"] == 1:
+        hand_index = card_info_revealed[0]
+        if len(card_info_revealed) == 1:
+          # Double check a plausible card is playable
+          plausible_cards = get_plausible_cards(observation,0,hand_index)
+          #print(f"Ruleset.playable_now_convention: been told once")
+          if any(playable_card(plausible_card,fireworks) for plausible_card in plausible_cards):
+            #print(f"Ruleset.playable_now_convention: triggered!")
+            return {'action_type': 'PLAY', 'card_index': hand_index}
+    return None
+
+
   @staticmethod
   def discard_oldest_first(observation):
     if (observation['information_tokens']) < 8:
@@ -393,7 +420,6 @@ class Ruleset():
   @staticmethod
   def tell_playable_card(observation):
     fireworks = observation['fireworks']
-
     # Check if it's possible to hint a card to your colleagues.
     if observation['information_tokens'] > 0:
       # Check if there are any playable cards in the hands of the opponents.

@@ -431,6 +431,11 @@ class HanabiMove(object):
     elif move_type == HanabiMoveType.DEAL:
       move_dict["color"] = color_idx_to_char(self.color())
       move_dict["rank"] = self.rank()
+    elif move_type == HanabiMoveType.DEAL_SPECIFIC:
+      move_dict["color"] = color_idx_to_char(self.color())
+      move_dict["rank"] = self.rank()
+    elif move_type == HanabiMoveType.RETURN:
+      move_dict["card_index"] = self.card_index()
     else:
       raise ValueError("Unsupported move: {}".format(self))
 

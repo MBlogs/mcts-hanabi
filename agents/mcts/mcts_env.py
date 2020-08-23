@@ -11,11 +11,17 @@ class DetermineType(enum.IntEnum):
   REPLACE = 1
   NONE = 2
 
+class ScoreType(enum.IntEnum):
+  """Move types, consistent with hanabi_lib/hanabi_move.h."""
+  REGRET = 0
+  SCORE = 1
+
 class MCTSEnv(HanabiEnv):
   def __init__(self, config):
     # This is the forward model for a particular MCTS player. Note it's position
     self.mcts_player = config['mcts_player']
     self.determine_type = config["determine_type"]
+    self.score_type = config["score_type"]
     self.remember_hand = None
     self.determiniser = MCTSDeterminizer()
     super().__init__(config)
@@ -90,7 +96,9 @@ class MCTSEnv(HanabiEnv):
     """Custom reward function for use during RIS-MCTS rollouts
     This is therefore not the same as the overall game score
     """
-    score = self.fireworks_score() - self.record_moves.regret()
+    score = self.fireworks_score()
+    if self.score_type == ScoreType.REGRET:
+      score -= self.record_moves.regret()
     return score
 
   def return_hand(self,player):
@@ -221,7 +229,8 @@ class MCTSEnv(HanabiEnv):
       if debug: print(f"mcts_env.restore_hand: Player {player} hand now {self.state.player_hands()[player]}")
 
 
-def make(environment_name="Hanabi-Full", num_players=2, mcts_player=0, determine_type=0, pyhanabi_path=None):
+def make(environment_name="Hanabi-Full", num_players=2, mcts_player=0
+         , determine_type=0, score_type=0, pyhanabi_path=None):
   """Make an environment.
 
   Args:
@@ -255,6 +264,8 @@ def make(environment_name="Hanabi-Full", num_players=2, mcts_player=0, determine
                 mcts_player,
             "determine_type":
                 determine_type,
+            "score_type":
+                score_type,
             "max_information_tokens":
                 8,
             "max_life_tokens":

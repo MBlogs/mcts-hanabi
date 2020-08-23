@@ -85,7 +85,6 @@ def get_visible_cards(observation, player_offset):
 
 # This returns an array of the naive probability of each card being playable from a playable from a certain player's perspective
 # This ignores conventions, and also doesn't make any inferences based on the information the current player has on their hand
-
 def get_card_playability(observation, player_offset=0):
   visible_cards = get_visible_cards(observation, player_offset)
   my_hand_size = len(observation['observed_hands'][player_offset])
@@ -109,7 +108,6 @@ def get_card_playability(observation, player_offset=0):
 
 def get_probability_useless(observation, player_offset=0):
   visible_cards = get_visible_cards(observation, player_offset)
-  # print(observation)
   my_hand_size = len(observation['observed_hands'][player_offset])
   probability_useless = np.zeros(my_hand_size)
   max_fireworks = get_max_fireworks(observation)
@@ -126,9 +124,30 @@ def get_probability_useless(observation, player_offset=0):
       if useless_card(plausible, observation['fireworks'], max_fireworks):
         useless_possibilities += num_in_deck
     probability_useless[hand_index] = useless_possibilities / total_possibilities
-
   return probability_useless
 
+# MB: Added for use in RIS-MCTS discard
+# The probability useless counts cards that are not
+# This one computes probability that it is not a CRITICAL card, where critical means regret when discarding
+def get_probability_notcritical(observation, player_offset=0):
+  visible_cards = get_visible_cards(observation, player_offset)
+  my_hand_size = len(observation['observed_hands'][player_offset])
+  probability_useless = np.zeros(my_hand_size)
+  max_fireworks = get_max_fireworks(observation)
+  for hand_index in range(my_hand_size):
+    total_possibilities = 0
+    notcritical_possibilities = 0
+    plausible_cards = get_plausible_cards(observation, player_offset, hand_index)
+    for plausible in plausible_cards:
+      num_in_deck = num_in_deck_by_rank[plausible.rank()]
+      for visible in visible_cards:
+        if visible['color'] == colors[plausible.color()] and visible['rank'] == plausible.rank():
+          num_in_deck -= 1
+      total_possibilities += num_in_deck
+      if useless_card(plausible, observation['fireworks'], max_fireworks) or num_in_deck > 1:
+        notcritical_possibilities += num_in_deck
+    probability_useless[hand_index] = notcritical_possibilities / total_possibilities
+  return probability_useless
 
 # Note: Fireworks goes from 0 to 5, whereas rank goes from 0 to 4
 def get_max_fireworks(observation):
@@ -193,18 +212,6 @@ class Ruleset():
       if not eventually_playable:
         return {'action_type': 'DISCARD', 'card_index': card_index}
     return None
-
-  # MB: osawa discard, if not, discard probably useless .75, if not, oldest
-  @staticmethod
-  def discard_best(observation):
-    if observation['information_tokens'] == 8:
-      return None
-    action = Ruleset.osawa_discard(observation)
-    if action is None:
-      action = Ruleset.discard_probably_useless_factory(0.75)(observation)
-    if action is None:
-      action = Ruleset.discard_oldest_first(observation)
-    return action
 
   # Note: this rule only looks at the next player on purpose, for compatibility with the Fossgalaxy implementation. Prioritizes color
   @staticmethod
@@ -298,9 +305,8 @@ class Ruleset():
     return None
 
   @staticmethod
-  # Tells if it 'completes' information on the card
+  # Quite general rule, doesn't require complete tell useful.
   def tell_anyone_useful_card(observation):
-    # Edited: Corrected
     return Ruleset.tell_playable_card_outer(observation)
 
   # Note: this follows the version of the rule that's used on VanDenBergh, which does not take into account whether or not they already know that information
@@ -445,7 +451,7 @@ class Ruleset():
 
   @staticmethod
   def discard_probably_useless_factory(treshold=0.75):
-    def play_probably_useless_treshold(observation):
+    def discard_probably_useless_treshold(observation):
       if observation['information_tokens'] < 8:
         probability_useless = get_probability_useless(observation)
         card_index = np.argmax(probability_useless)
@@ -453,10 +459,98 @@ class Ruleset():
           action = {'action_type': 'DISCARD', 'card_index': card_index}
           return action
       return None
-    return play_probably_useless_treshold
+    return discard_probably_useless_treshold
 
   # "Hail Mary" rule used by agent Piers
   @staticmethod
   def hail_mary(observation):
     if (observation['deck_size'] == 0 and observation['life_tokens'] > 1):
       return Ruleset.play_probably_safe_factory(0.0)(observation)
+
+  @staticmethod
+  def discard_probably_notcritical_factory(treshold=0.75):
+    def discard_probably_useless_treshold(observation):
+      if observation['information_tokens'] < 8:
+        probability_useless = get_probability_useless(observation)
+        card_index = np.argmax(probability_useless)
+        if probability_useless[card_index] >= treshold:
+          action = {'action_type': 'DISCARD', 'card_index': card_index}
+          return action
+      return None
+    return discard_probably_useless_treshold
+
+  # MB: Added for RIS branching
+  # Tell player who knows something about a playable card the remaining information
+  @staticmethod
+  def complete_tell_useful(observation):
+    fireworks = observation['fireworks']
+    if observation['information_tokens'] > 0:
+      max_fireworks = get_max_fireworks(observation)
+      for player_offset in range(1, observation['num_players']):
+        player_hand = observation['observed_hands'][player_offset]
+        player_hints = observation['card_knowledge'][player_offset]
+        for card, hint in zip(player_hand, player_hints):
+          if playable_card(card, fireworks):
+            if hint['color'] is None and hint['rank'] is not None:
+              return {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
+            if hint['rank'] is None and hint['color'] is not None:
+              return {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
+    return None
+
+  # MB: Added for RIS branching
+  # Tell player who knows something about a discardabe card the remaining information
+  @staticmethod
+  def complete_tell_dispensable(observation):
+    fireworks = observation['fireworks']
+    if observation['information_tokens'] > 0:
+      max_fireworks = get_max_fireworks(observation)
+      for player_offset in range(1, observation['num_players']):
+        player_hand = observation['observed_hands'][player_offset]
+        player_hints = observation['card_knowledge'][player_offset]
+        for card, hint in zip(player_hand, player_hints):
+          if useless_card(card, fireworks, max_fireworks):
+            if hint['color'] is None and hint['rank'] is not None:
+              return {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
+            if hint['rank'] is None and hint['color'] is not None:
+              return {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
+    return None
+
+  # MB: Added for RIS branching
+  # Tell player who knows something about a not playable, but not discardable card the remaining information
+  @staticmethod
+  def complete_tell_unplayable(observation):
+    fireworks = observation['fireworks']
+    if observation['information_tokens'] > 0:
+      max_fireworks = get_max_fireworks(observation)
+      for player_offset in range(1, observation['num_players']):
+        player_hand = observation['observed_hands'][player_offset]
+        player_hints = observation['card_knowledge'][player_offset]
+        for card, hint in zip(player_hand, player_hints):
+          if not useless_card(card, fireworks, max_fireworks) and not playable_card(card, fireworks):
+            if hint['color'] is None and hint['rank'] is not None:
+              return {'action_type': 'REVEAL_COLOR', 'color': card['color'], 'target_offset': player_offset}
+            if hint['rank'] is None and hint['color'] is not None:
+              return {'action_type': 'REVEAL_RANK', 'rank': card['rank'], 'target_offset': player_offset}
+    return None
+
+  # MB: Added for RIS branching
+  @staticmethod
+  def play_probably_safe_late_factory(treshold=0.4, deck_size=5):
+    def play_probably_safe_late(observation):
+      if observation["deck_size"] <= deck_size:
+        return Ruleset.play_probably_safe_factory(treshold)(observation)
+    return play_probably_safe_late
+
+  # MB: Discard a definite safe card. If not discard card most confident is not critical
+  @staticmethod
+  def discard_most_confident(observation):
+    if observation['information_tokens'] == 8:
+      return None
+    action = Ruleset.osawa_discard(observation)
+    if action is None:
+      action = Ruleset.discard_probably_notcritical_factory(0)(observation)
+    if action is None:
+      action = Ruleset.discard_oldest_first(observation)  # Shouldn't reach here but just in case
+    return action
+
+

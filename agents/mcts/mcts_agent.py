@@ -39,38 +39,48 @@ class MCTSAgent(Agent):
     self.rules =  [Ruleset.tell_most_information_factory(True)  # TellMostInformation
         , Ruleset.tell_anyone_useful_card  # TellAnyoneUseful
         , Ruleset.tell_dispensable_factory(8)
-        , Ruleset.tell_playable_card_outer  # Hint missing information about a playable card
-        , Ruleset.play_probably_safe_factory(0.7, True)  # Play card with 70% certainty
-        , Ruleset.discard_best]
+        , Ruleset.complete_tell_useful
+        , Ruleset.complete_tell_dispensable
+        , Ruleset.complete_tell_unplayable
+        , Ruleset.play_probably_safe_factory(0.7, False)
+        , Ruleset.play_probably_safe_late_factory(0.4, 5)
+        , Ruleset.discard_most_confident]
     self.determine_type = mcts_env.DetermineType.RESTORE
-    self.mcts_type = int(config["mcts_types"][config['player_id']])
+    self.score_type = mcts_env.ScoreType.REGRET
+    self.mcts_type = config["mcts_types"][config['player_id']]
     self._edit_mcts_config(self.mcts_type, config)
     # Make use of special MCTSEnv that allows redterminizing hands during rollouts
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id']
-                                     ,determine_type = self.determine_type)
+                                     ,determine_type = self.determine_type, score_type = self.score_type)
     self.max_information_tokens = config.get('information_tokens', 8)
     print(self._get_mcts_config())
 
   def _edit_mcts_config(self, mcts_type, config):
-    """Create the default or adjusted config"""
-    if mcts_type == 0: # RIS VDB (Re, Rules, VDB)
+    """Interpret the mcts_type character"""
+    if mcts_type == '0': # DEFAULT
       pass
-    elif mcts_type == 1: # IS Random (No re, No rules, Random)
+    elif mcts_type == '1': # IS Random (No re, No rules, Random, SCORE)
       self.determine_type = mcts_env.DetermineType.NONE
       self.rules = None
       self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
-    elif mcts_type == 2: # IS VDB (No re, No rules, VDB)
+      self.score_type = mcts_env.ScoreType.SCORE
+    elif mcts_type == '2': # IS VDB (No re, No rules, VDB)
       self.determine_type = mcts_env.DetermineType.NONE
       self.rules = None
-    elif mcts_type == 3: # RIS Random (Re, Rules, Random)
-      self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
-
+    elif mcts_type == '3': # SCORE
+      self.score_type = mcts_env.ScoreType.SCORE
+    elif mcts_type == '4': # RIS SCORE VDB No rules (Re, Rules, VDB, SCORE)
+      self.score_type = mcts_env.ScoreType.SCORE
+      self.rules = None
+    elif mcts_type == '5':  # RIS SCORE VDB No rules (Re, Rules, VDB, SCORE)
+      self.score_type = mcts_env.ScoreType.SCORE
+      self.rules = None
 
   def _get_mcts_config(self):
-    return f"mcts_config = {{max_time_limit:{self.max_time_limit}, self.max_rollout_num:{self.max_rollout_num}" \
-           f", max_simulation_steps:{self.max_simulation_steps}, agents:{self.agents}" \
-           f", determine_type:{self.determine_type}" \
-           f", exploration_weight:{self.exploration_weight}, rules:{self.rules}}}" \
+    return f"mcts_config = {{'max_time_limit':{self.max_time_limit}, 'max_rollout_num':{self.max_rollout_num}" \
+           f", 'max_simulation_steps':{self.max_simulation_steps}, 'agents':{self.agents}" \
+           f", 'determine_type':{self.determine_type}, 'score_type':{self.score_type}" \
+           f", 'exploration_weight':{self.exploration_weight}, 'rules':{self.rules}}}" \
 
   def __str__(self):
     return 'MCTSAgent'+str(self.mcts_type)
@@ -124,11 +134,11 @@ class MCTSAgent(Agent):
 
     # Now at the end of training
     if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
-    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
-    #print(f"mcts_agent.act: Chose node {best_node}")
+    print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 

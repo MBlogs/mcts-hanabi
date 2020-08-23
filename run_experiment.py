@@ -68,8 +68,11 @@ class Runner(object):
         game_stats.append(self.environment.game_stats())
         for i in range(len(self.agent_classes)):
           player_stats[i].append(self.environment.player_stats(i))
+        #TEMP TEMP TEMPT
+        if self.environment.fireworks_score() < 13:
+          return
       except Exception as e:
-        print(e)
+        #print(e)
         errors += 1
 
     print("]")
@@ -94,9 +97,9 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
-  flags = {'players': 3, 'num_episodes': 5
-    ,'agent':'LegalRandomAgent', 'agents':'OuterAgent'
-    , 'mcts_types': '000'}
+  flags = {'players': 3, 'num_episodes': 10
+    ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
+    , 'mcts_types': '00000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',
@@ -109,8 +112,7 @@ if __name__ == "__main__":
              '--num_episodes  number of game episodes to run.\n'
              '--agent  class name of agent of interest {}\n'
              '--agents  class name of agent to play off: {}\n'
-             '--mcts_types 00000 type of each mcts agent (if any) \n'
-             '0 default, 1 REPLACE, 2 NONE, 3 No branching rules'
+             '--mcts_types 00000 each character is the type of the mcts agent in that position, see mcts_agent._edit_mcts_config'
              ''.format(' or '.join(AGENT_CLASSES.keys())))
 
   # Convert any extra options into the flags

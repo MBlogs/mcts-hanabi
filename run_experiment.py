@@ -66,8 +66,6 @@ class Runner(object):
               assert action is None
           observations, reward, done, unused_info = self.environment.step(current_player_action)
         print(self.environment.fireworks_score(), end=",")
-        if self.environment.fireworks_score() < 14:
-          return
         game_stats.append(self.environment.game_stats())
         for i in range(len(self.agent_classes)):
           player_stats[i].append(self.environment.player_stats(i))
@@ -97,7 +95,7 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
-  flags = {'players': 3, 'num_episodes': 5
+  flags = {'players': 3, 'num_episodes': 10
     ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
     , 'mcts_types': 'aaa'}
   options, arguments = getopt.getopt(sys.argv[1:], '',

@@ -79,20 +79,20 @@ class MCTSAgent(Agent):
     elif mcts_type == '5':  # RIS SCORE VDB No rules (Re, Rules, VDB, SCORE)
       self.score_type = mcts_env.ScoreType.SCORE
       self.rules = None
-    elif mcts_type == 'a':  # mybest_c
+    elif mcts_type == 'a':  # mybestc
       self.playable_now_convention = True
       self.playable_now_convention_sim = True
-    elif mcts_type == 'b':  # mybest_noc
+    elif mcts_type == 'b':  # mybestnoc
       pass
-    elif mcts_type == 'b':  # litmatch
+    elif mcts_type == 'c':  # litmatch
       self.score_type = mcts_env.ScoreType.SCORE
-    elif mcts_type == 'c':  # nodet
+    elif mcts_type == 'd':  # nodet
       self.score_type = mcts_env.ScoreType.SCORE
       self.determine_type = mcts_env.DetermineType.NONE
-    elif mcts_type == 'd':  # norules
+    elif mcts_type == 'e':  # norules
       self.score_type = mcts_env.ScoreType.SCORE
       self.rules = None
-    elif mcts_type == 'e':  # norestriction
+    elif mcts_type == 'f':  # norestriction
       self.score_type = mcts_env.ScoreType.SCORE
       self.rules = None
       self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]

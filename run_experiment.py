@@ -58,7 +58,6 @@ class Runner(object):
               action = agent.act(observation, self.environment.state)
             else:
               action = agent.act(observation)
-
             if observation['current_player'] == agent_id:
               assert action is not None
               current_player_action = action
@@ -70,15 +69,12 @@ class Runner(object):
         for i in range(len(self.agent_classes)):
           player_stats[i].append(self.environment.player_stats(i))
       except Exception as e:
-        raise e
         errors += 1
 
     print("]")
     print(f",scores = {[g['score'] for g in game_stats]}")
     print(f",stats_keys={list(game_stats[0].keys())}")
-    #print(f",game_stats = {game_stats}")
     print(f",game_stats = {self.simplify_stats(game_stats)}")
-    #print(f",player_stats = {player_stats}")
     print(f",player_stats = {[self.simplify_stats(p) for p in player_stats]}")
     avg_progress = sum([g["progress"] for g in game_stats]) / flags['num_episodes']
     avg_score = sum([g["score"] for g in game_stats]) / flags['num_episodes']
@@ -98,8 +94,8 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
-  flags = {'players': 3, 'num_episodes': 10
-    ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
+  flags = {'players': 3, 'num_episodes': 100
+    ,'agent':'FlawedAgent', 'agents':'FlawedAgent'
     , 'mcts_types': '000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
@@ -129,7 +125,7 @@ if __name__ == "__main__":
     sys.exit(f'Number of agent classes:{len(flags["agent_classes"])} not same as number of players: {flags["players"]}')
 
   #Print the config
-  print("experiments = [Experiment(")
+  print("experiments_store = [Experiment(")
   print(f"flags = {flags}")
   print(",mcts_configs = [")
   runner = Runner(flags)

@@ -55,11 +55,11 @@ if __name__ == "__main__":
   master_experiments = {}
   experiments = None
   #for k,v in file_names.items():
-  #  experiments = None
+  #  experiments_store = None
   #   print(f"Readin {k}")
-  #  # exec(open(v).read()) # Defines a list of experiments (eg. 2p - 5p)
-  #  assert experiments is not None
-  #  master_experiments[k] = experiments
+  #  # exec(open(v).read()) # Defines a list of experiments_store (eg. 2p - 5p)
+  #  assert experiments_store is not None
+  #  master_experiments[k] = experiments_store
 
   assert experiments is not None
   master_experiments["temp"] = experiments

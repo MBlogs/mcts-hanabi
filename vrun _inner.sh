@@ -7,7 +7,7 @@
 module load python
 # Activate virtualenv
 source myenv/bin/activate
-# Run experiments
+# Run experiments_store
 python3 run_experiment.py --players 2 --num_episodes 250 --agents InnerAgent --agent InnerAgent
 python3 run_experiment.py --players 3 --num_episodes 250 --agents InnerAgent --agent InnerAgent
 python3 run_experiment.py --players 4 --num_episodes 250 --agents InnerAgent --agent InnerAgent

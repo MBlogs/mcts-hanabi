@@ -63,34 +63,32 @@ class MCTSAgent(Agent):
     """Interpret the mcts_type character"""
     if mcts_type == '0': #default
       pass
-    elif mcts_type == '1': #piers
-      self.agents = [PiersAgent(config) for _ in range(config["players"])]
-    elif mcts_type == '2': #regret_piers
-      self.agents = [PiersAgent(config) for _ in range(config["players"])]
+    elif mcts_type == '1': #regret
       self.score_type = mcts_env.ScoreType.REGRET
-    elif mcts_type == '3': #c_regret_piers
-      self.agents = [PiersAgent(config) for _ in range(config["players"])]
+    elif mcts_type == '2': #c_regret
       self.score_type = mcts_env.ScoreType.REGRET
       self.playable_now_convention = True
       self.playable_now_convention_sim = True
-    elif mcts_type == '4': #detnone
+    elif mcts_type == '3': #detnone
       self.determine_type = mcts_env.DetermineType.NONE
-    elif mcts_type == '5': #detnone_rulesnone
+    elif mcts_type == '4': #detnone_rulesnone
       self.determine_type = mcts_env.DetermineType.NONE
       self.rules = None
-    elif mcts_type == '6': #detnone_random_rulesnone
+    elif mcts_type == '5': #detnone_random_rulesnone
       self.determine_type = mcts_env.DetermineType.NONE
       self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
       self.rules = None
-    elif mcts_type == '7': #detnone_regret_piers_depth1
+    elif mcts_type == '6': #detnone_regret_depth1
       self.determine_type = mcts_env.DetermineType.NONE
       self.score_type = mcts_env.ScoreType.REGRET
-      self.agents = [PiersAgent(config) for _ in range(config["players"])]
       self.max_depth = 1
     elif mcts_type == 'x': #fast test
       self.max_rollout_num = 10
     elif mcts_type == 't': #test
-      self.max_rollout_num = 50
+      self.max_rollout_num = 25
+      self.score_type = mcts_env.ScoreType.REGRET
+    else:
+      print(f"'mcts_config_error {mcts_type}',")
 
   def _get_mcts_config(self):
     return f"{{'max_time_limit':{self.max_time_limit}, 'max_rollout_num':{self.max_rollout_num}" \

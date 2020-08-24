@@ -7,6 +7,6 @@
 module load python
 # Activate virtualenv
 source myenv/bin/activate
-# Run experiments
-python3 run_experiment.py --num_episodes 100 --agent MCTSAgent --agents MCTSAgent --mcts_type aaa
+# Run experiments_store
+python3 run_experiment.py --num_episodes 100 --agent MCTSAgent --agents MCTSAgent --mcts_type 555
 deactivate

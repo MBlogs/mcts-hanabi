@@ -39,7 +39,7 @@ class MCTSAgent(Agent):
     self.exploration_weight = 2.5
     self.max_depth = 100
     self.determine_type = mcts_env.DetermineType.RESTORE
-    self.score_type = mcts_env.ScoreType.REGRET
+    self.score_type = mcts_env.ScoreType.SCORE
     self.playable_now_convention = False # Agent will follow playable now convention
     self.playable_now_convention_sim = False # Agents in simulation follow playable now convention
     self.rules =  [Ruleset.tell_most_information_factory(True)  # TellMostInformation
@@ -61,44 +61,36 @@ class MCTSAgent(Agent):
 
   def _edit_mcts_config(self, mcts_type, config):
     """Interpret the mcts_type character"""
-    if mcts_type == '0': # DEFAULT
+    if mcts_type == '0': #default
       pass
-    elif mcts_type == '1': # IS Random (No re, No rules, Random, SCORE)
-      self.determine_type = mcts_env.DetermineType.NONE
-      self.rules = None
-      self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
-      self.score_type = mcts_env.ScoreType.SCORE
-    elif mcts_type == '2': # IS VDB (No re, No rules, VDB)
-      self.determine_type = mcts_env.DetermineType.NONE
-      self.rules = None
-    elif mcts_type == '3': # SCORE
-      self.score_type = mcts_env.ScoreType.SCORE
-    elif mcts_type == '4': # SCORE VDB No rules (Re, Rules, VDB, SCORE)
-      self.score_type = mcts_env.ScoreType.SCORE
-      self.rules = None
-    elif mcts_type == '5':  # RIS SCORE VDB No rules (Re, Rules, VDB, SCORE)
-      self.score_type = mcts_env.ScoreType.SCORE
-      self.rules = None
-    elif mcts_type == 'a':  # mybestc
+    elif mcts_type == '1': #piers
+      self.agents = [PiersAgent(config) for _ in range(config["players"])]
+    elif mcts_type == '2': #regret_piers
+      self.agents = [PiersAgent(config) for _ in range(config["players"])]
+      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == '3': #c_regret_piers
+      self.agents = [PiersAgent(config) for _ in range(config["players"])]
+      self.score_type = mcts_env.ScoreType.REGRET
       self.playable_now_convention = True
       self.playable_now_convention_sim = True
-    elif mcts_type == 'b':  # mybestnoc
-      pass
-    elif mcts_type == 'c':  # litmatch
-      self.score_type = mcts_env.ScoreType.SCORE
-    elif mcts_type == 'd':  # nodet
-      self.score_type = mcts_env.ScoreType.SCORE
+    elif mcts_type == '4': #detnone
       self.determine_type = mcts_env.DetermineType.NONE
-    elif mcts_type == 'e':  # norules
-      self.score_type = mcts_env.ScoreType.SCORE
+    elif mcts_type == '5': #detnone_rulesnone
+      self.determine_type = mcts_env.DetermineType.NONE
       self.rules = None
-    elif mcts_type == 'f':  # norestriction
-      self.score_type = mcts_env.ScoreType.SCORE
-      self.rules = None
+    elif mcts_type == '6': #detnone_random_rulesnone
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents = [LegalRandomAgent(config) for _ in range(config["players"])]
+      self.rules = None
+    elif mcts_type == '7': #detnone_regret_piers_depth1
       self.determine_type = mcts_env.DetermineType.NONE
-    elif mcts_type == 'x': #quick agent
-      self.max_time_limit = 1000
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.agents = [PiersAgent(config) for _ in range(config["players"])]
+      self.max_depth = 1
+    elif mcts_type == 'x': #fast test
+      self.max_rollout_num = 10
+    elif mcts_type == 't': #test
+      self.max_rollout_num = 50
 
   def _get_mcts_config(self):
     return f"{{'max_time_limit':{self.max_time_limit}, 'max_rollout_num':{self.max_rollout_num}" \
@@ -164,10 +156,11 @@ class MCTSAgent(Agent):
 
     # Now at the end of training
     if debug: print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
-    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
+    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     #print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 

@@ -13,8 +13,9 @@ class DetermineType(enum.IntEnum):
 
 class ScoreType(enum.IntEnum):
   """Move types, consistent with hanabi_lib/hanabi_move.h."""
-  REGRET = 0
-  SCORE = 1
+  SCORE = 0
+  REGRET = 1
+  PROGRESS = 2
 
 class MCTSEnv(HanabiEnv):
   def __init__(self, config):
@@ -92,14 +93,20 @@ class MCTSEnv(HanabiEnv):
   def player_stats(self):
     return self.record_moves.player_stats
 
+  def regret(self):
+    return self.record_moves.regret()
+
   def reward(self):
     """Custom reward function for use during RIS-MCTS rollouts
     This is therefore not the same as the overall game score
     """
-    score = self.fireworks_score()
-    if self.score_type == ScoreType.REGRET:
-      score -= self.record_moves.regret()
-    return score
+    if self.score_type == ScoreType.PROGRESS:
+      return self.progress()
+    elif self.score_type == ScoreType.REGRET:
+      return self.progress() - self.regret()
+    else:
+      return self.score()
+
 
   def return_hand(self,player):
     """Return all cards from a player's hand to the deck

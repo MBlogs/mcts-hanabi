@@ -42,7 +42,7 @@ class Runner(object):
       player_stats.append([])
 
     print("]") # end mcts_config
-    print(",scores=[", end="")
+    print(",progress=[", end="")
     errors = 0
 
     for episode in range(flags['num_episodes']):
@@ -65,7 +65,7 @@ class Runner(object):
             else:
               assert action is None
           observations, reward, done, unused_info = self.environment.step(current_player_action)
-        print(self.environment.fireworks_score(), end=",")
+        print(self.environment.progress(), end=",")
         game_stats.append(self.environment.game_stats())
         for i in range(len(self.agent_classes)):
           player_stats[i].append(self.environment.player_stats(i))
@@ -74,13 +74,16 @@ class Runner(object):
         errors += 1
 
     print("]")
+    print(f",scores = {[g['score'] for g in game_stats]}")
     print(f",stats_keys={list(game_stats[0].keys())}")
     #print(f",game_stats = {game_stats}")
     print(f",game_stats = {self.simplify_stats(game_stats)}")
     #print(f",player_stats = {player_stats}")
     print(f",player_stats = {[self.simplify_stats(p) for p in player_stats]}")
+    avg_progress = sum([g["progress"] for g in game_stats]) / flags['num_episodes']
     avg_score = sum([g["score"] for g in game_stats]) / flags['num_episodes']
     avg_time = sum([p["elapsed_time"]/max(p["moves"], 1) for p in player_stats[0]]) / flags['num_episodes']
+    print(f",avg_progress={avg_progress}")
     print(f",avg_score={avg_score}")
     print(f",avg_time={avg_time}")
     print(f",errors={errors}")
@@ -97,7 +100,7 @@ if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
   flags = {'players': 3, 'num_episodes': 10
     ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
-    , 'mcts_types': 'xxx'}
+    , 'mcts_types': '000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

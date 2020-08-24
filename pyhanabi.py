@@ -616,13 +616,20 @@ class HanabiState(object):
       firework_list.append(lib.StateFireworks(self._state, c))
     return firework_list
 
-  def fireworks_score(self):
+  def progress(self):
     """MB: Utility function. Return the combined fireworks score"""
     score=0
     fireworks = self.fireworks()
     for f in fireworks:
       score += f
     return score
+
+  def score(self):
+    """MB: Utility function. Return the strict score"""
+    if self.life_tokens() == 0:
+      return 0
+    else:
+      return self.progress()
 
   def deal_random_card(self):
     """If cur_player == CHANCE_PLAYER_ID, make a random card-deal move."""

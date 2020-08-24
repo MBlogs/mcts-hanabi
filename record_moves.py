@@ -6,7 +6,7 @@ num_rank = [3, 2, 2, 2, 1]
 class RecordMoves(object):
 
   def __init__(self, players):
-    self._stat_list = ["score", "moves"
+    self._stat_list = ["score","progress", "moves"
       , "regret", "regret_discard_critical", "regret_play_fail", "regret_play_fail_critical", "regret_play_fail_endgame"
       , "discard", "discard_critical", "discard_useful", "discard_safe"
       , "play", "play_success", "play_fail", "play_fail_critical", "play_fail_endgame"
@@ -28,8 +28,10 @@ class RecordMoves(object):
   def update(self, move, observation, action_player, elapsed_time):
     """Update game stats by passing the action taken and the new state observation."""
     debug = False
-    self.game_stats["score"] = self._fireworks_score(observation["fireworks"])
-    self.player_stats[action_player]["score"] = self._fireworks_score(observation["fireworks"])
+    self.game_stats["score"] = self._score(observation)
+    self.player_stats[action_player]["score"] = self._score(observation)
+    self.game_stats["progress"] = self._fireworks_score(observation["fireworks"])
+    self.player_stats[action_player]["progress"] = self._fireworks_score(observation["fireworks"])
     self._update_stat("elapsed_time", elapsed_time, action_player)
     self._update_stat("moves", 1, action_player)
 
@@ -104,13 +106,18 @@ class RecordMoves(object):
     return regret
 
   def _end_game_regret(self, observation, recorded_observation):
-    """Game has ended. How much better could we do?"""
-    # Note: Copied from Ruleset
+    """Game ended too early. Regret is the max score possible"""
     max_fireworks = self._get_max_fireworks(recorded_observation)
     max_fireworks_score = sum(v for k,v in max_fireworks.items())
-    fireworks_score = self._fireworks_score(observation["fireworks"])
-    return max_fireworks_score - fireworks_score
+    #fireworks_score = self._fireworks_score(observation["fireworks"])
+    #return max_fireworks_score - fireworks_score
+    return max_fireworks_score
 
+  def _score(self, observation):
+    if observation["life_tokens"] == 0:
+      return 0
+    else:
+      return self._fireworks_score(observation["fireworks"])
 
   def _fireworks_score(self, fireworks):
     return sum(v for k,v in fireworks.items())

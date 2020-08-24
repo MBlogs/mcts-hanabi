@@ -160,16 +160,20 @@ class HanabiEnv(Environment):
     if debug: print(f"rl_env.step: Game Stats: {self.record_moves.game_stats}")
     if debug: print(f"rl_env.step: Player Stats: {self.record_moves.player_stats}")
 
-    reward = self.fireworks_score()
+    reward = self.score()
     self.start_time = time.time()
     info = {}
     return (observations, reward, done, info)
 
-  def fireworks_score(self):
-    return self.state.fireworks_score()
+  def score(self):
+    return self.state.score()
+
+  def progress(self):
+    return self.state.progress()
 
   def game_stats(self):
     return self.record_moves.game_stats
+
   def player_stats(self,player):
     return self.record_moves.player_stats[player]
 

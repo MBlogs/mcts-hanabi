@@ -111,8 +111,11 @@ class OuterAgent(RulebasedAgent):
 class InnerAgent(RulebasedAgent):
   def __init__(self, config, *args, **kwargs):
     """Initialize the agent."""
-    rules = [Ruleset.play_safe_card, Ruleset.osawa_discard, Ruleset.tell_playable_card, Ruleset.tell_randomly,
-                  Ruleset.discard_randomly]
+    rules = [Ruleset.play_safe_card
+             , Ruleset.osawa_discard
+             , Ruleset.tell_playable_card
+             , Ruleset.tell_randomly
+             , Ruleset.discard_randomly]
     super().__init__(config, rules)
 
 class MuteAgent(RulebasedAgent):

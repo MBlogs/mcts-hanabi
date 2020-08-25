@@ -13,11 +13,12 @@ from agents.rule_based.rule_based_agents import PiersAgent
 from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
+from agents.rule_based.rule_based_agents import MuteAgent
 import pyhanabi
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent
                   , 'OuterAgent':OuterAgent, 'InnerAgent':InnerAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
-                  , 'LegalRandomAgent':LegalRandomAgent}
+                  , 'LegalRandomAgent':LegalRandomAgent,'MuteAgent':MuteAgent}
 
 class MCTSAgent(Agent):
   """Agent based on Redeterminizing Information Set Monte Carlo Tree Search"""
@@ -82,6 +83,41 @@ class MCTSAgent(Agent):
       self.determine_type = mcts_env.DetermineType.NONE
       self.score_type = mcts_env.ScoreType.REGRET
       self.max_depth = 1
+    elif mcts_type == '7': #c
+      self.playable_now_convention
+      self.playable_now_convention_sim
+    elif mcts_type == '8': #rulesnone
+      self.rules = None
+    elif mcts_type == '9': #detnone_regret
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == 'a': #regret_rulesnone
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.rules = None
+    elif mcts_type == 'b': #detnone_regret_rulesnone
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.rules = None
+    elif mcts_type == 'c': #  flawed_detnone_regret_depth1
+      self.max_depth = 1
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.agents[0] = FlawedAgent(config)
+    elif mcts_type == 'd': #  random_detnone_regret_depth1
+      self.max_depth = 1
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.agents[0] = LegalRandomAgent(config)
+    elif mcts_type == 'e': #  inner_detnone_regret_depth1
+      self.max_depth = 1
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.agents[0] = InnerAgent(config)
+    elif mcts_type == 'f': #  mute_detnone_regret_depth1
+      self.max_depth = 1
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.agents[0] = MuteAgent(config)
     elif mcts_type == 'x': #fast test
       self.max_rollout_num = 10
     elif mcts_type == 't': #test

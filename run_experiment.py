@@ -11,11 +11,12 @@ from agents.rule_based.rule_based_agents import PiersAgent
 from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
+from agents.rule_based.rule_based_agents import MuteAgent
 from agents.mcts.mcts_agent import MCTSAgent
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent, 'MCTSAgent': MCTSAgent
                   , 'OuterAgent':OuterAgent, 'InnerAgent':InnerAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
-                  , 'LegalRandomAgent':LegalRandomAgent}
+                  , 'LegalRandomAgent':LegalRandomAgent, 'MuteAgent':MuteAgent}
 
 class Runner(object):
   """Runner class."""
@@ -94,9 +95,9 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
-  flags = {'players': 3, 'num_episodes': 100
+  flags = {'players': 3, 'num_episodes': 1
     ,'agent':'MCTSAgent', 'agents':'MCTSAgent'
-    , 'mcts_types': '000'}
+    , 'mcts_types': '555'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',
@@ -114,7 +115,7 @@ if __name__ == "__main__":
 
   # Convert any extra options into the flags
   for flag, value in options:
-    flag = flag[2:]  # Strip leading --.
+    flag = flag[2:]  # Strip leading --
     flags[flag] = type(flags[flag])(value)
 
   # agent_classes lists the players of the game
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     sys.exit(f'Number of agent classes:{len(flags["agent_classes"])} not same as number of players: {flags["players"]}')
 
   #Print the config
-  print("experiments_store = [Experiment(")
+  print("experiments = [Experiment(")
   print(f"flags = {flags}")
   print(",mcts_configs = [")
   runner = Runner(flags)

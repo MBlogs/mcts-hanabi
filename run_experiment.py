@@ -97,7 +97,7 @@ if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
   flags = {'players': 3, 'num_episodes': 100
     ,'agent':'FlawedAgent', 'agents':'MCTSAgent'
-    , 'mcts_types': '000'}
+    , 'mcts_types': 'eee'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

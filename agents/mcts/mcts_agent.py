@@ -98,26 +98,77 @@ class MCTSAgent(Agent):
       self.DetermineType = mcts_env.DetermineType.NONE
       self.score_type = mcts_env.ScoreType.REGRET
       self.rules = None
-    elif mcts_type == 'c': #  flawed_detnone_regret_depth1
-      self.max_depth = 1
-      self.determine_type = mcts_env.DetermineType.NONE
-      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == 'c': #detnone_c
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.playable_now_convention = True
+      self.playable_now_convention_sim = True
+    elif mcts_type == 'd': #mix_default
+      self.DetermineType = mcts_env.DetermineType.NONE
+    elif mcts_type == 'e':  # mix_flawed
+      self.DetermineType = mcts_env.DetermineType.NONE
       self.agents[0] = FlawedAgent(config)
-    elif mcts_type == 'd': #  random_detnone_regret_depth1
-      self.max_depth = 1
-      self.determine_type = mcts_env.DetermineType.NONE
+    elif mcts_type == 'f':  # mix_flawed_regret
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = FlawedAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
-      self.agents[0] = LegalRandomAgent(config)
-    elif mcts_type == 'e': #  inner_detnone_regret_depth1
+    elif mcts_type == 'g':  # mix_flawed_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = FlawedAgent(config)
       self.max_depth = 1
-      self.determine_type = mcts_env.DetermineType.NONE
+    elif mcts_type == 'h':  # mix_flawed_regret_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = FlawedAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
-      self.agents[0] = InnerAgent(config)
-    elif mcts_type == 'f': #  mute_detnone_regret_depth1
       self.max_depth = 1
-      self.determine_type = mcts_env.DetermineType.NONE
-      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == 'i':  # mix_mute
+      self.DetermineType = mcts_env.DetermineType.NONE
       self.agents[0] = MuteAgent(config)
+    elif mcts_type == 'j':  # mix_mute_regret
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = MuteAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == 'k':  # mix_mute_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = MuteAgent(config)
+      self.max_depth = 1
+    elif mcts_type == 'l':  # mix_mute_regret_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = MuteAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.max_depth = 1
+    elif mcts_type == 'm':  # mix_inner
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = InnerAgent(config)
+    elif mcts_type == 'n':  # mix_inner_regret
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = InnerAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == 'o':  # mix_inner_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = InnerAgent(config)
+      self.max_depth = 1
+    elif mcts_type == 'p':  # mix_inner_regret_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = InnerAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.max_depth = 1
+    elif mcts_type == 'q':  # mix_random
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = LegalRandomAgent(config)
+    elif mcts_type == 'r':  # mix_random_regret
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = LegalRandomAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == 's':  # mix_random_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = LegalRandomAgent(config)
+      self.max_depth = 1
+    elif mcts_type == 't':  # mix_random_regret_depth1
+      self.DetermineType = mcts_env.DetermineType.NONE
+      self.agents[0] = LegalRandomAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.max_depth = 1
+
     elif mcts_type == 'x': #fast test
       self.max_rollout_num = 10
     elif mcts_type == 't': #test

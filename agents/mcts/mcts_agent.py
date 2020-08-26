@@ -89,88 +89,100 @@ class MCTSAgent(Agent):
     elif mcts_type == '8': #rulesnone
       self.rules = None
     elif mcts_type == '9': #detnone_regret
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.score_type = mcts_env.ScoreType.REGRET
     elif mcts_type == 'a': #regret_rulesnone
       self.score_type = mcts_env.ScoreType.REGRET
       self.rules = None
     elif mcts_type == 'b': #detnone_regret_rulesnone
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.score_type = mcts_env.ScoreType.REGRET
       self.rules = None
     elif mcts_type == 'c': #detnone_c
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.playable_now_convention = True
       self.playable_now_convention_sim = True
     elif mcts_type == 'd': #mix_default
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
     elif mcts_type == 'e':  # mix_flawed
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = FlawedAgent(config)
     elif mcts_type == 'f':  # mix_flawed_regret
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = FlawedAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
     elif mcts_type == 'g':  # mix_flawed_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = FlawedAgent(config)
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 'h':  # mix_flawed_regret_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = FlawedAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 'i':  # mix_mute
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = MuteAgent(config)
     elif mcts_type == 'j':  # mix_mute_regret
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = MuteAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
     elif mcts_type == 'k':  # mix_mute_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = MuteAgent(config)
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 'l':  # mix_mute_regret_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = MuteAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 'm':  # mix_inner
       self.DetermineType = mcts_env.DetermineType.NONE
       self.agents[0] = InnerAgent(config)
     elif mcts_type == 'n':  # mix_inner_regret
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = InnerAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
     elif mcts_type == 'o':  # mix_inner_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = InnerAgent(config)
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 'p':  # mix_inner_regret_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = InnerAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 'q':  # mix_random
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = LegalRandomAgent(config)
     elif mcts_type == 'r':  # mix_random_regret
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = LegalRandomAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
     elif mcts_type == 's':  # mix_random_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = LegalRandomAgent(config)
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 't':  # mix_random_regret_depth1
-      self.DetermineType = mcts_env.DetermineType.NONE
+      self.determine_type = mcts_env.DetermineType.NONE
       self.agents[0] = LegalRandomAgent(config)
       self.score_type = mcts_env.ScoreType.REGRET
       self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
 
     elif mcts_type == 'x': #fast test
       self.max_rollout_num = 10
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.max_depth = 1
+      self.agents[0] = FlawedAgent(config)
     elif mcts_type == 't': #test
       self.max_rollout_num = 25
       self.score_type = mcts_env.ScoreType.REGRET
@@ -190,7 +202,7 @@ class MCTSAgent(Agent):
     return str(self)
 
   def act(self, observation, state):
-    debug = False
+    debug = True
     if observation['current_player_offset'] != 0:
       return None
 
@@ -245,8 +257,8 @@ class MCTSAgent(Agent):
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
-    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
-    #print(f"mcts_agent.act: Chose node {best_node}")
+    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 
@@ -275,6 +287,7 @@ class MCTSAgent(Agent):
       depth += 1
       if depth > self.max_depth:
         break
+      #ToDO: This seems debateable...
 
     leaf.focused_state = self.environment.state
     # Don't expand if we didn't get to a root
@@ -360,6 +373,7 @@ class MCTSAgent(Agent):
       observations, reward, done, unused_info = self.environment.step(current_player_action)
       if debug: print(f"mcts_agent.rollout_game: Agent {agent_id} completed action {current_player_action}")
       steps += 1
+      print(f"mcts_agent.simulate steps are {steps}")
       if not done:
         done = steps >= self.max_simulation_steps
 

@@ -1,0 +1,34 @@
+experiments = [Experiment(
+flags = {'players': 3, 'num_episodes': 1, 'agent': 'FlawedAgent', 'agents': 'MCTSAgent', 'mcts_types': 'fff', 'agent_classes': ['FlawedAgent', 'MCTSAgent', 'MCTSAgent']}
+,mcts_configs = [
+{'max_time_limit':10000, 'max_rollout_num':100,'agents':'[<agents.rule_based.rule_based_agents.FlawedAgent object at 0x2aef223a7668>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2aef223a7240>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2aef223a76d8>]', 'max_simulation_steps':3, 'max_depth':100, 'determine_type':0, 'score_type':1, 'exploration_weight':2.5,'playable_now_convention':False,'playable_now_convention_sim':False, 'rules':'[<function Ruleset.tell_most_information_factory.<locals>.tell_most_information at 0x2aef2b112d08>, <function Ruleset.tell_anyone_useful_card at 0x2aef2b075510>, <function Ruleset.tell_dispensable_factory.<locals>.tell_dispensable at 0x2aef223c4488>, <function Ruleset.complete_tell_useful at 0x2aef2b075ae8>, <function Ruleset.complete_tell_dispensable at 0x2aef2b075b70>, <function Ruleset.complete_tell_unplayable at 0x2aef2b075bf8>, <function Ruleset.play_probably_safe_factory.<locals>.play_probably_safe_treshold at 0x2aef223c4510>, <function Ruleset.play_probably_safe_late_factory.<locals>.play_probably_safe_late at 0x2aef223c4598>, <function Ruleset.discard_most_confident at 0x2aef2b075d08>]'},
+{'max_time_limit':10000, 'max_rollout_num':100,'agents':'[<agents.rule_based.rule_based_agents.FlawedAgent object at 0x2aef223a7c88>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2aef223a7390>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2aef223a7b70>]', 'max_simulation_steps':3, 'max_depth':100, 'determine_type':0, 'score_type':1, 'exploration_weight':2.5,'playable_now_convention':False,'playable_now_convention_sim':False, 'rules':'[<function Ruleset.tell_most_information_factory.<locals>.tell_most_information at 0x2aef2b112d90>, <function Ruleset.tell_anyone_useful_card at 0x2aef2b075510>, <function Ruleset.tell_dispensable_factory.<locals>.tell_dispensable at 0x2aef223c4b70>, <function Ruleset.complete_tell_useful at 0x2aef2b075ae8>, <function Ruleset.complete_tell_dispensable at 0x2aef2b075b70>, <function Ruleset.complete_tell_unplayable at 0x2aef2b075bf8>, <function Ruleset.play_probably_safe_factory.<locals>.play_probably_safe_treshold at 0x2aef223c4bf8>, <function Ruleset.play_probably_safe_late_factory.<locals>.play_probably_safe_late at 0x2aef223c4c80>, <function Ruleset.discard_most_confident at 0x2aef2b075d08>]'},
+]
+,progress=[5,]
+,scores = [0]
+,stats_keys=['score', 'progress', 'moves', 'regret', 'regret_discard_critical', 'regret_play_fail', 'regret_play_fail_critical', 'regret_play_fail_endgame', 'discard', 'discard_critical', 'discard_useful', 'discard_safe', 'play', 'play_success', 'play_fail', 'play_fail_critical', 'play_fail_endgame', 'information', 'information_color', 'information_rank', 'elapsed_time']
+,game_stats = [[0, 5, 28, 25, 0, 25, 0, 25, 6, 0, 2, 4, 8, 5, 3, 0, 1, 14, 6, 8, 31969]]
+,player_stats = [[[0, 5, 10, 25, 0, 25, 0, 25, 0, 0, 0, 0, 7, 4, 3, 0, 1, 3, 3, 0, 34]], [[4, 4, 9, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 7, 2, 5, 16758]], [[5, 5, 9, 0, 0, 0, 0, 0, 4, 0, 0, 4, 1, 1, 0, 0, 0, 4, 1, 3, 15177]]]
+,avg_progress=5.0
+,avg_score=0.0
+,avg_time=3.4
+,errors=0
+),
+]
+experiments = [Experiment(
+flags = {'players': 3, 'num_episodes': 1, 'agent': 'FlawedAgent', 'agents': 'MCTSAgent', 'mcts_types': 'hhh', 'agent_classes': ['FlawedAgent', 'MCTSAgent', 'MCTSAgent']}
+,mcts_configs = [
+{'max_time_limit':10000, 'max_rollout_num':100,'agents':'[<agents.rule_based.rule_based_agents.FlawedAgent object at 0x2b3c2bed27b8>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2b3c2bed23c8>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2b3c2bed2588>]', 'max_simulation_steps':3, 'max_depth':1, 'determine_type':0, 'score_type':1, 'exploration_weight':2.5,'playable_now_convention':False,'playable_now_convention_sim':False, 'rules':'[<function Ruleset.tell_most_information_factory.<locals>.tell_most_information at 0x2b3c34bc9d90>, <function Ruleset.tell_anyone_useful_card at 0x2b3c34bac598>, <function Ruleset.tell_dispensable_factory.<locals>.tell_dispensable at 0x2b3c2befb510>, <function Ruleset.complete_tell_useful at 0x2b3c34bacb70>, <function Ruleset.complete_tell_dispensable at 0x2b3c34bacbf8>, <function Ruleset.complete_tell_unplayable at 0x2b3c34bacc80>, <function Ruleset.play_probably_safe_factory.<locals>.play_probably_safe_treshold at 0x2b3c2befb598>, <function Ruleset.play_probably_safe_late_factory.<locals>.play_probably_safe_late at 0x2b3c2befb620>, <function Ruleset.discard_most_confident at 0x2b3c34bacd90>]'},
+{'max_time_limit':10000, 'max_rollout_num':100,'agents':'[<agents.rule_based.rule_based_agents.FlawedAgent object at 0x2b3c2bed2da0>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2b3c2bed29e8>, <agents.rule_based.rule_based_agents.VanDenBerghAgent object at 0x2b3c2bed2b70>]', 'max_simulation_steps':3, 'max_depth':1, 'determine_type':0, 'score_type':1, 'exploration_weight':2.5,'playable_now_convention':False,'playable_now_convention_sim':False, 'rules':'[<function Ruleset.tell_most_information_factory.<locals>.tell_most_information at 0x2b3c34bc9e18>, <function Ruleset.tell_anyone_useful_card at 0x2b3c34bac598>, <function Ruleset.tell_dispensable_factory.<locals>.tell_dispensable at 0x2b3c2befbbf8>, <function Ruleset.complete_tell_useful at 0x2b3c34bacb70>, <function Ruleset.complete_tell_dispensable at 0x2b3c34bacbf8>, <function Ruleset.complete_tell_unplayable at 0x2b3c34bacc80>, <function Ruleset.play_probably_safe_factory.<locals>.play_probably_safe_treshold at 0x2b3c2befbc80>, <function Ruleset.play_probably_safe_late_factory.<locals>.play_probably_safe_late at 0x2b3c2befbd08>, <function Ruleset.discard_most_confident at 0x2b3c34bacd90>]'},
+]
+,progress=[11,]
+,scores = [0]
+,stats_keys=['score', 'progress', 'moves', 'regret', 'regret_discard_critical', 'regret_play_fail', 'regret_play_fail_critical', 'regret_play_fail_endgame', 'discard', 'discard_critical', 'discard_useful', 'discard_safe', 'play', 'play_success', 'play_fail', 'play_fail_critical', 'play_fail_endgame', 'information', 'information_color', 'information_rank', 'elapsed_time']
+,game_stats = [[0, 11, 34, 25, 1, 24, 1, 23, 6, 1, 2, 3, 14, 11, 3, 1, 1, 14, 6, 8, 29627]]
+,player_stats = [[[0, 11, 12, 24, 0, 24, 1, 23, 1, 0, 1, 0, 10, 7, 3, 1, 1, 1, 0, 1, 25]], [[11, 11, 11, 1, 1, 0, 0, 0, 5, 1, 1, 3, 1, 1, 0, 0, 0, 5, 2, 3, 14187]], [[11, 11, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 8, 4, 4, 15415]]]
+,avg_progress=11.0
+,avg_score=0.0
+,avg_time=2.0833333333333335
+,errors=0
+),
+]

@@ -95,9 +95,9 @@ class Runner(object):
 
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
-  flags = {'players': 3, 'num_episodes': 100
-    ,'agent':'FlawedAgent', 'agents':'MCTSAgent'
-    , 'mcts_types': 'eee'}
+  flags = {'players': 3, 'num_episodes': 1
+    ,'agent':'MuteAgent', 'agents':'MCTSAgent'
+    , 'mcts_types': 'hhh'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

@@ -31,7 +31,7 @@ class MCTSEnv(HanabiEnv):
     self.record_moves.reset(observations)
 
   def step(self, action):
-    debug = False
+    debug = True
 
     # Convert action into HanabiMove
     if isinstance(action, dict):
@@ -70,6 +70,7 @@ class MCTSEnv(HanabiEnv):
 
     # IF REPLACING HANDS
     if self.determine_type != DetermineType.NONE:
+      if debug: print(f"mcts_env.step: self.determine_type {self.determine_type} while DetermineType.NONE is: {DetermineType.NONE}")
       # Now we're onto the  next player. If not me, remember, then replace their hand
       if self.state.cur_player() != self.mcts_player:
         if debug: print(f"mcts_env.step: Player {self.state.cur_player()} saving hand")

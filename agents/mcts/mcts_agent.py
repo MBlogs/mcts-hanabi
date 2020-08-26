@@ -176,7 +176,24 @@ class MCTSAgent(Agent):
       self.score_type = mcts_env.ScoreType.REGRET
       self.max_depth = 1
       self.max_simulation_steps = config["players"] - 1
-
+    elif mcts_type == 'u':  # mix_vdb
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.agents[0] = VanDenBerghAgent(config)
+    elif mcts_type == 'v':  # mix_vdb_regret
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.agents[0] = VanDenBerghAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+    elif mcts_type == 'w':  # mix_vdb_depth1
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.agents[0] = VanDenBerghAgent(config)
+      self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
+    elif mcts_type == 'x':  # mix_vdb_regret_depth1
+      self.determine_type = mcts_env.DetermineType.NONE
+      self.agents[0] = VanDenBerghAgent(config)
+      self.score_type = mcts_env.ScoreType.REGRET
+      self.max_depth = 1
+      self.max_simulation_steps = config["players"] - 1
     elif mcts_type == 'x': #fast test
       self.max_rollout_num = 10
       self.score_type = mcts_env.ScoreType.REGRET

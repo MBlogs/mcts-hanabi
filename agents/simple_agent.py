@@ -62,3 +62,5 @@ class SimpleAgent(Agent):
       return {'action_type': 'DISCARD', 'card_index': 0}
     else:
       return {'action_type': 'PLAY', 'card_index': 0}
+
+

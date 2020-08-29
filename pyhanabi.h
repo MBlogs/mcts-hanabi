@@ -131,6 +131,7 @@ void* StateLegalMoves(pyhanabi_state_t* state);
 int StateLifeTokens(pyhanabi_state_t* state);
 int StateNumPlayers(pyhanabi_state_t* state);
 int StateScore(pyhanabi_state_t* state);
+int StateTurnsToPlay(pyhanabi_state_t* state);
 char* StateToString(pyhanabi_state_t* state);
 bool MoveIsLegal(const pyhanabi_state_t* state, const pyhanabi_move_t* move);
 bool CardPlayableOnFireworks(const pyhanabi_state_t* state, int color,

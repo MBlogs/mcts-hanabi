@@ -70,6 +70,7 @@ class Runner(object):
         for i in range(len(self.agent_classes)):
           player_stats[i].append(self.environment.player_stats(i))
       except Exception as e:
+        raise e
         errors += 1
 
     print("]")
@@ -96,8 +97,8 @@ class Runner(object):
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
   flags = {'players': 3, 'num_episodes': 1
-    ,'agent':'MuteAgent', 'agents':'MCTSAgent'
-    , 'mcts_types': 'hhh'}
+    ,'agent':'VanDenBerghAgent', 'agents':'VanDenBerghAgent'
+    , 'mcts_types': '000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
                                       'num_episodes=',

@@ -99,6 +99,7 @@ class HanabiState {
   int CurPlayer() const { return cur_player_; }
   int LifeTokens() const { return life_tokens_; }
   int InformationTokens() const { return information_tokens_; }
+  int TurnsToPlay() const {return turns_to_play_; }
 
   const std::vector<HanabiHand>& Hands() const { return hands_; }
   const std::vector<int>& Fireworks() const { return fireworks_; }

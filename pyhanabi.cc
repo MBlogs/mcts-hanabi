@@ -346,6 +346,11 @@ void StateApplyMove(pyhanabi_state_t* state, pyhanabi_move_t* move) {
   hanabi_state->ApplyMove(*hanabi_move);
 }
 
+int StateTurnsToPlay(pyhanabi_state_t* state){
+    return reinterpret_cast<hanabi_learning_env::HanabiState*>(state->state)
+      ->TurnsToPlay();
+}
+
 void StateRemoveKnowledge(pyhanabi_state_t* state, int player, int card_index){
     auto hanabi_state =
       reinterpret_cast<hanabi_learning_env::HanabiState*>(state->state);

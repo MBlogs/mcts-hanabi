@@ -127,7 +127,7 @@ class HanabiEnv(Environment):
     return self.game.max_moves()
 
   def step(self, action):
-    debug = True
+    debug = False
     elapsed_time = int(round((time.time() - self.start_time)*1000))
 
     if isinstance(action, dict):
@@ -208,6 +208,7 @@ class HanabiEnv(Environment):
     obs_dict["information_tokens"] = observation.information_tokens()
     obs_dict["num_players"] = observation.num_players()
     obs_dict["deck_size"] = observation.deck_size()
+    obs_dict["turns_to_play"] = self.state.turns_to_play()
 
     obs_dict["fireworks"] = {}
     fireworks = self.state.fireworks()

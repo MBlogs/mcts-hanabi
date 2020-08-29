@@ -219,7 +219,7 @@ class MCTSAgent(Agent):
     return str(self)
 
   def act(self, observation, state):
-    debug = True
+    debug = False
     if observation['current_player_offset'] != 0:
       return None
 
@@ -274,8 +274,8 @@ class MCTSAgent(Agent):
     self.root_node.focused_state = self.root_state.copy()
     best_node = self._choose(self.root_node)
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
-    print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
-    print(f"mcts_agent.act: Chose node {best_node}")
+    #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
+    #print(f"mcts_agent.act: Chose node {best_node}")
     return best_node.initial_move()
 
 
@@ -390,7 +390,7 @@ class MCTSAgent(Agent):
       observations, reward, done, unused_info = self.environment.step(current_player_action)
       if debug: print(f"mcts_agent.rollout_game: Agent {agent_id} completed action {current_player_action}")
       steps += 1
-      print(f"mcts_agent.simulate steps are {steps}")
+      #print(f"mcts_agent.simulate steps are {steps}")
       if not done:
         done = steps >= self.max_simulation_steps
 

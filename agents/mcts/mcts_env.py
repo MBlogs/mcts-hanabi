@@ -31,7 +31,7 @@ class MCTSEnv(HanabiEnv):
     self.record_moves.reset(observations)
 
   def step(self, action):
-    debug = True
+    debug = False
 
     # Convert action into HanabiMove
     if isinstance(action, dict):

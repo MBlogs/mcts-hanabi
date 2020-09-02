@@ -1,5 +1,5 @@
-This project implements an Redterminising Information Set Monte Carlo Tree Search agent into the hanabi\_learning\_environment research platform for Hanabi experiments developed by Google Deep Mind available at: https://github.com/deepmind/hanabi-learning-environment
-New moves Return and DealSpecific were added to the underlying C++ framework to allow direct state manipulation (swapping cards in and out). Observation encoding and different Hanabi variations are not supported.
+This project implements an Redterminising Information Set Monte Carlo Tree Search agent into the hanabi\_learning\_environment research platform for Hanabi experiments developed by Google Deep Mind available at: https://github.com/deepmind/hanabi-learning-environment.
+New moves 'Return' and 'DealSpecific' were added to the underlying C++ framework to allow direct state manipulation (swapping cards in and out). Observation encoding and different Hanabi variations are not supported.
 
 ### Getting started
 Instructions for installing the learning environment in a new linux environment:
@@ -24,7 +24,7 @@ num_episodes: integer. Number of games to include in experiment.
 players: integer. Number of players in the game.
 agent: First player will be of this type.
 agent_classs: Remaining players will be of this type
-mcts_type: string. Types for the MCTS agents, each character corresponding to a player position.
+mcts_type: string. Types for the MCTS agents, each character corresponding to the player position.
 ```
 Supported Agent Classes are:
 - VanDenBerghAgent
@@ -41,6 +41,6 @@ Supported Agent Classes are:
 Type of MCTS agent in a player position is determined by the corresponding character of the mcts_types string. See agents.mcts.mcts_agent.py for full list of possible types
 
 ### Experiment Results
-Experiment result prints out Python code that defines a list of Experiments objects.
-Raw data from experiment runs can be found in experiments.
+run_experiment prints out Python code that defines a list of Experiments objects.
+Raw data from experiment runs for the paper can be found in the experiments folder.
 experiments/analyse_experiment.ipynb is a notebook that defines the Experiment class to extract this data, and produces the summary tables and graphs seen in the paper

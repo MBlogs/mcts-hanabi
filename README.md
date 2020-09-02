@@ -1,3 +1,5 @@
+Code source: https://github.com/MBlogs/mcts-hanabi
+
 This project implements an Redterminising Information Set Monte Carlo Tree Search agent into the hanabi\_learning\_environment research platform for Hanabi experiments developed by Google Deep Mind available at: https://github.com/deepmind/hanabi-learning-environment.
 New moves 'Return' and 'DealSpecific' were added to the underlying C++ framework to allow direct state manipulation (swapping cards in and out). Observation encoding and different Hanabi variations are not supported.
 
@@ -5,9 +7,12 @@ New moves 'Return' and 'DealSpecific' were added to the underlying C++ framework
 Instructions for installing the learning environment in a new linux environment:
 ```
 sudo apt-get install g++            # if you don't already have a CXX compiler
+sudo apt-get install python3        # if don't have python
 sudo apt-get install python3-pip3   # if you don't already have pip
-pip install numpy                   # Python package dependency
-pip install cffi                    # Python package dependency
+pip3 install numpy                   # Python package dependency
+pip3 install cffi                    # Python package dependency
+sudo apt-get install cmake          # if don't have cmake
+sudo apt install git                # if don't have git
 git clone https://github.com/MBlogs/mcts-hanabi
 cd mcts-hanabi
 cmake .                             # Compile
@@ -23,8 +28,8 @@ Supported parameters and values include:
 num_episodes: integer. Number of games to include in experiment.
 players: integer. Number of players in the game.
 agent: First player will be of this type.
-agent_classs: Remaining players will be of this type
-mcts_type: string. Types for the MCTS agents, each character corresponding to the player position.
+agents: Remaining players will be of this type
+mcts_types: string. Types for the MCTS agents, each character corresponding to the player position.
 ```
 Supported Agent Classes are:
 - VanDenBerghAgent

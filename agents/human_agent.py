@@ -46,7 +46,7 @@ class HumanAgent(Agent):
       print("Possible actions: ", end="")
       self.print_all_moves(legal_actions)
       print("")
-      human_input = input("Choose an action:")
+      human_input = input("Choose an action, or bot followed by an agent:")
       action_args = [a.upper() for a in human_input.split(" ")]
       action['action_type'] = action_args[0]
 

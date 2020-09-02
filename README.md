@@ -15,12 +15,13 @@ make
 ```
 ### Running Experiments
 ```
-python3 run_experiment.py --num_players 3 --agent HumanAgent --agents MCTSAgent --mcts_types 000
+python3 run_experiment.py --num_episodes 1 --players 3 --agent HumanAgent --agents MCTSAgent --mcts_types 000
 ```
 ### Experiment Parameters
 Supported parameters and values include:
 ```
-num_players: integer. Number of players in the game.
+num_episodes: integer. Number of games to include in experiment.
+players: integer. Number of players in the game.
 agent: First player will be of this type.
 agent_classs: Remaining players will be of this type
 mcts_type: string. Types for the MCTS agents, each character corresponding to a player position.
@@ -40,5 +41,6 @@ Supported Agent Classes are:
 Type of MCTS agent in a player position is determined by the corresponding character of the mcts_types string. See agents.mcts.mcts_agent.py for full list of possible types
 
 ### Experiment Results
-Raw data from experiment runs can be found in experiments folder.
-experiments/analyse_experiment.ipynb is a notebook that extracts this data and produces the summary tables and graphs seen in the paper
+Experiment result prints out Python code that defines a list of Experiments objects.
+Raw data from experiment runs can be found in experiments.
+experiments/analyse_experiment.ipynb is a notebook that defines the Experiment class to extract this data, and produces the summary tables and graphs seen in the paper

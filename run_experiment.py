@@ -13,10 +13,11 @@ from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.rule_based.rule_based_agents import MuteAgent
 from agents.mcts.mcts_agent import MCTSAgent
+from agents.human_agent import HumanAgent
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent, 'MCTSAgent': MCTSAgent
                   , 'OuterAgent':OuterAgent, 'InnerAgent':InnerAgent, 'PiersAgent':PiersAgent, 'IGGIAgent':IGGIAgent
-                  , 'LegalRandomAgent':LegalRandomAgent, 'MuteAgent':MuteAgent}
+                  , 'LegalRandomAgent':LegalRandomAgent, 'MuteAgent':MuteAgent, 'HumanAgent':HumanAgent}
 
 class Runner(object):
   """Runner class."""
@@ -97,7 +98,7 @@ class Runner(object):
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
   flags = {'players': 3, 'num_episodes': 1
-    ,'agent':'VanDenBerghAgent', 'agents':'VanDenBerghAgent'
+    ,'agent':'HumanAgent', 'agents':'MCTSAgent'
     , 'mcts_types': '000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',
@@ -109,9 +110,9 @@ if __name__ == "__main__":
     sys.exit('usage: rl_env_example.py [options]\n'
              '--players       number of players in the game.\n'
              '--num_episodes  number of game episodes to run.\n'
-             '--agent  class name of agent of interest {}\n'
-             '--agents  class name of agent to play off: {}\n'
-             '--mcts_types 00000 each character is the type of the mcts agent in that position, see mcts_agent._edit_mcts_config'
+             '--agent  class name of single agent. Supported: {}\n'
+             '--agents  class name of pair of agents to play against\n'
+             '--mcts_types 000 each character is the type of the mcts agent in that position, see mcts_agent._edit_mcts_config'
              ''.format(' or '.join(AGENT_CLASSES.keys())))
 
   # Convert any extra options into the flags

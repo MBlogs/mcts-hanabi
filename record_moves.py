@@ -26,7 +26,6 @@ class RecordMoves(object):
   def update(self, move, observation, action_player, elapsed_time):
     """Update game stats by passing the action taken and the new state observation."""
     debug = False
-    inaction = True
     self.game_stats["score"] = self._score(observation)
     self.player_stats[action_player]["score"] = self._score(observation)
     self.game_stats["progress"] = self._fireworks_score(observation["fireworks"])
@@ -84,17 +83,6 @@ class RecordMoves(object):
       else:
         self._update_stat("play_success", 1, action_player)
 
-    # Inaction Near End Game
-    recorded_turns_to_play = self.recorded_observation["deck_size"] + \
-                         min(self.recorded_observation["turns_to_play"],self.recorded_observation["num_players"])
-    turns_to_play = observation["deck_size"] + min(observation["turns_to_play"], observation["num_players"])
-    #print(f"turns_to_play is {turns_to_play}")#
-    if turns_to_play <  recorded_turns_to_play and inaction:
-      if self._inaction(observation):
-        pass
-        #self._update_stat("regret",1,action_player)
-        #self._update_stat("regret_inaction",1, action_player)
-
     self.recorded_observation = observation
     if debug: print(f"record_moves.update: Game {self.game_stats}")
     if debug: print(f"record_moves.update: Players {self.player_stats}")
@@ -113,22 +101,6 @@ class RecordMoves(object):
     regret = self._fireworks_score(max_fireworks_before) - self._fireworks_score(max_fireworks_after)
     regret = min(regret,observation["turns_to_play"])
     return regret
-
-  def _inaction(self, observation):
-    fireworks_score = self._fireworks_score(observation["fireworks"])
-    max_fireworks = self._get_max_fireworks(observation)
-    max_fireworks_score = self._fireworks_score(max_fireworks)
-    #print(f"_inaction: fireworks_score is {fireworks_score}")
-    #print(f"_inaction: max fireworks_score is {max_fireworks_score}")
-    # Number of turns left where a card COULD be played is: cards left in deck + number of players (their final turns)
-    # Turns left is more subtle than this
-    turns_to_play = observation["deck_size"] + min(observation["turns_to_play"], observation["num_players"])
-    if turns_to_play < (max_fireworks_score - fireworks_score):
-      #print(f'_inaction: Adding because turns left {turns_to_play}'
-      #      f' and score to go is: {max_fireworks_score - fireworks_score}')
-      return True
-    else:
-      return False
 
   def _end_game_regret(self, observation, recorded_observation):
     """Game ended too early. Regret is the max score possible"""

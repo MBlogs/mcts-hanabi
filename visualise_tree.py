@@ -22,7 +22,7 @@ class Tree(object):
 
   def create_tree_animation(self):
     plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = plt.subplots(figsize=(12, 14))
 
     def tree_animation_frame(i):
       ax.clear()
@@ -71,7 +71,7 @@ class Tree(object):
 
       # Cycled through all the nodes so print
       G = nx.Graph()
-      print(edges)
+      #print(edges)
       G.add_edges_from(edges)
       pos = graphviz_layout(G, prog='dot')
       nx.draw_networkx_nodes(G, pos, ax=ax, node_size=node_size, node_color=node_color, cmap=plt.cm.Blues_r)
@@ -84,7 +84,6 @@ class Tree(object):
     # Finally, show live animation
     plt.show()
     waiting = input()
-
 
   def _get_tree_string(self, tree, N, Q):
     tree_string = ""

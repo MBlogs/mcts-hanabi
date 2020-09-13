@@ -62,7 +62,7 @@ class MCTSAgent(Agent):
     self.max_information_tokens = config.get('information_tokens', 8)
     # For Animation
     self.vis_tree = Tree()
-    print(self._get_mcts_config())
+    #print(self._get_mcts_config())
 
   def _edit_mcts_config(self, mcts_type, config):
     """Interpret the mcts_type character"""
@@ -282,12 +282,12 @@ class MCTSAgent(Agent):
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
     #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     #print(f"mcts_agent.act: Chose node {best_node}")
-    self.vis_tree.create_tree_animation()
+    if max([q/n for q,n in zip(self.Q.values(),self.N.values())]) > 1:
+      self.vis_tree.create_tree_animation()
     return best_node.initial_move()
 
 
   def _do_rollout(self, node, observation):
-    # ToDO: Should not being able to get to node/tree depth backprop the full path?
     debug = False
     # Do rollout tries to roll the focused state according to the moves in the tree
 

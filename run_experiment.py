@@ -41,8 +41,8 @@ class Runner(object):
       agents.append(self.agent_classes[i](self.agent_config))
       player_stats.append([])
 
-    print("]") # end mcts_config
-    print(",progress=[", end="")
+    #print("]") # end mcts_config
+    #print(",progress=[", end="")
     errors = 0
 
     for episode in range(flags['num_episodes']):
@@ -64,7 +64,7 @@ class Runner(object):
             else:
               assert action is None
           observations, reward, done, unused_info = self.environment.step(current_player_action)
-        print(self.environment.progress(), end=",")
+        #print(self.environment.progress(), end=",")
         game_stats.append(self.environment.game_stats())
         for i in range(len(self.agent_classes)):
           player_stats[i].append(self.environment.player_stats(i))
@@ -72,19 +72,19 @@ class Runner(object):
         raise e
         errors += 1
 
-    print("]")
-    print(f",scores = {[g['score'] for g in game_stats]}")
-    print(f",stats_keys={list(game_stats[0].keys())}")
-    print(f",game_stats = {self.simplify_stats(game_stats)}")
-    print(f",player_stats = {[self.simplify_stats(p) for p in player_stats]}")
+    #print("]")
+    #print(f",scores = {[g['score'] for g in game_stats]}")
+    #print(f",stats_keys={list(game_stats[0].keys())}")
+    #print(f",game_stats = {self.simplify_stats(game_stats)}")
+    #print(f",player_stats = {[self.simplify_stats(p) for p in player_stats]}")
     avg_progress = sum([g["progress"] for g in game_stats]) / flags['num_episodes']
     avg_score = sum([g["score"] for g in game_stats]) / flags['num_episodes']
     avg_time = sum([p["elapsed_time"]/max(p["moves"], 1) for p in player_stats[0]]) / flags['num_episodes']
-    print(f",avg_progress={avg_progress}")
-    print(f",avg_score={avg_score}")
-    print(f",avg_time={avg_time}")
-    print(f",errors={errors}")
-    print("),")
+    #print(f",avg_progress={avg_progress}")
+    #print(f",avg_score={avg_score}")
+    #print(f",avg_time={avg_time}")
+    #print(f",errors={errors}")
+    #print("),")
 
   def simplify_stats(self, stats):
     """Extract just the numbers from the stats"""
@@ -126,9 +126,9 @@ if __name__ == "__main__":
     sys.exit(f'Number of agent classes:{len(flags["agent_classes"])} not same as number of players: {flags["players"]}')
 
   #Print the config
-  print("experiments = [Experiment(")
-  print(f"flags = {flags}")
-  print(",mcts_configs = [")
+  #print("experiments = [Experiment(")
+  #print(f"flags = {flags}")
+  #print(",mcts_configs = [")
   runner = Runner(flags)
   runner.run()
-  print("]")
+  #print("]")

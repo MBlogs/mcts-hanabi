@@ -14,6 +14,7 @@ from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.rule_based.rule_based_agents import MuteAgent
+from visualise_tree import Tree
 import pyhanabi
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent
@@ -34,7 +35,7 @@ class MCTSAgent(Agent):
     self.player_id = config["player_id"]
     # Assign values based on config
     self.max_time_limit =  10000# in ms
-    self.max_rollout_num = 100
+    self.max_rollout_num = 10
     self.max_simulation_steps = config["players"]
     self.agents = [VanDenBerghAgent(config) for _ in range(config["players"])]
     self.exploration_weight = 2.5
@@ -58,6 +59,8 @@ class MCTSAgent(Agent):
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id']
                                      ,determine_type = self.determine_type, score_type = self.score_type)
     self.max_information_tokens = config.get('information_tokens', 8)
+    # For Animation
+    self.vis_tree = Tree()
     print(self._get_mcts_config())
 
   def _edit_mcts_config(self, mcts_type, config):
@@ -254,6 +257,7 @@ class MCTSAgent(Agent):
       # Rollout one iteration under this master determinisation
       path, reward = self._do_rollout(self.root_node, observation)
       rollout += 1
+      self.vis_tree.update_tree_animation(self.children, self.N, self.Q)
       elapsed_time = (time.time() - start_time) * 1000
 
       if debug:
@@ -276,6 +280,7 @@ class MCTSAgent(Agent):
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
     #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     #print(f"mcts_agent.act: Chose node {best_node}")
+    self.vis_tree.create_tree_animation()
     return best_node.initial_move()
 
 

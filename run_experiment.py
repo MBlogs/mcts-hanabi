@@ -29,7 +29,6 @@ class Runner(object):
     self.environment = make('Hanabi-Full', num_players=flags['players'])
     self.agent_classes = [AGENT_CLASSES[agent_class] for agent_class in flags['agent_classes']]
 
-
   def run(self):
     """Run episodes."""
     game_stats = []
@@ -98,7 +97,7 @@ class Runner(object):
 if __name__ == "__main__":
   # MB: agent: Player of interest. agent: fill in remaining spaces
   flags = {'players': 3, 'num_episodes': 1
-    ,'agent':'HumanAgent', 'agents':'MCTSAgent'
+    ,'agent':'MCTSAgent', 'agents':'VanDenBerghAgent'
     , 'mcts_types': '000'}
   options, arguments = getopt.getopt(sys.argv[1:], '',
                                      ['players=',

@@ -35,8 +35,9 @@ class MCTSAgent(Agent):
     self.player_id = config["player_id"]
     # Assign values based on config
     self.max_time_limit =  10000# in ms
-    self.max_rollout_num = 10
-    self.max_simulation_steps = config["players"]
+    self.max_rollout_num = 50
+    #self.max_simulation_steps = config["players"]
+    self.max_simulation_steps = 3
     self.agents = [VanDenBerghAgent(config) for _ in range(config["players"])]
     self.exploration_weight = 2.5
     self.max_depth = 100
@@ -257,7 +258,8 @@ class MCTSAgent(Agent):
       # Rollout one iteration under this master determinisation
       path, reward = self._do_rollout(self.root_node, observation)
       rollout += 1
-      self.vis_tree.update_tree_animation(self.children, self.N, self.Q)
+      if rollout > 1:
+        self.vis_tree.update_tree_animation(self.children, self.N, self.Q)
       elapsed_time = (time.time() - start_time) * 1000
 
       if debug:
@@ -380,7 +382,7 @@ class MCTSAgent(Agent):
     reward = self.environment.reward()
     steps = 0
 
-    while not done:
+    while not done and steps < self.max_simulation_steps:
       for agent_id, agent in enumerate(self.agents):
         observation = observations['player_observations'][agent_id]
         if observation['current_player'] == agent_id:

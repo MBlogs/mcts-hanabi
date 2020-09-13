@@ -36,7 +36,6 @@ class Runner(object):
     agents = []
 
     # MB: Pass absolute player_id upfront to all agents (MCTS needs this for forward model)
-
     for i in range(len(self.agent_classes)):
       self.agent_config.update({'player_id': i}) #change player_id
       agents.append(self.agent_classes[i](self.agent_config))

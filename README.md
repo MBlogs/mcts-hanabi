@@ -1,11 +1,19 @@
 Code source: https://github.com/MBlogs/mcts-hanabi
 
-This project implements an Redterminising Information Set Monte Carlo Tree Search agent into the hanabi\_learning\_environment research platform for Hanabi experiments developed by Google Deep Mind available at: https://github.com/deepmind/hanabi-learning-environment.
-New moves 'Return' and 'DealSpecific' were added to the underlying C++ framework to allow direct state manipulation (swapping cards in and out). Observation encoding and different Hanabi variations are not supported.
+### Summary
+This project implements an Redeterminising Information Set Monte Carlo Tree Search agent into the hanabi\_learning\_environment research platform for Hanabi experiments developed by Google Deep Mind: https://github.com/deepmind/hanabi-learning-environment.
+
+- The Agent determinises on each rollout to fill in unknown information in a way consistent with the hints it is told
+- Nodes are information sets, collection of possible states
+- New moves 'Return' and 'DealSpecific' were added to the underlying C++ framework to allow direct state manipulation (swapping cards in and out)
+- Observation encoding and different Hanabi variations are not supported.
 
 ![](mcts.gif)
 
-### Getting started
+### Paper
+MSc project paper and viva can be found in /paper
+
+### Install
 Instructions for installing into a new linux environment:
 ```
 sudo apt-get install g++            # if you don't already have a CXX compiler

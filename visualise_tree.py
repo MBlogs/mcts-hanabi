@@ -22,7 +22,7 @@ class Tree(object):
 
   def create_tree_animation(self):
     plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-    fig, ax = plt.subplots(figsize=(12, 14))
+    fig, ax = plt.subplots(figsize=(14, 12))
 
     def tree_animation_frame(i):
       ax.clear()
@@ -31,8 +31,8 @@ class Tree(object):
 
     def develop_tree(N, Q):
       """Pass in list of node dicts with path as key"""
-      size_min = 50
-      size_max = 300
+      size_min = 100
+      size_max = 400
       node_labels = {}
       node_labels['root'] = round(max(Q.values()) / max(N.values()), 1)
       edge_labels = {}
@@ -61,7 +61,7 @@ class Tree(object):
       node_avg = [q / n for q, n in zip(node_Q, node_N)]
       # If all values are the same, set node_color all to 1 to avoid div by 0
       min_node_avg = min(node_avg)
-      max_node_avg = min_node_avg+4
+      max_node_avg = max(node_avg)
 
       if max_node_avg - min_node_avg == 0:
         node_color = [0 for val in node_avg]
@@ -80,7 +80,7 @@ class Tree(object):
       nx.draw_networkx_edge_labels(G, pos, ax=ax, edge_labels=edge_labels, label_pos=0.5, font_size=6)
 
     # Make and save animation
-    ani = animation.FuncAnimation(fig, tree_animation_frame,frames=len(self.trees), interval=50,repeat_delay=5000)
+    ani = animation.FuncAnimation(fig, tree_animation_frame,frames=len(self.trees), interval=20,repeat_delay=5000)
     # Finally, show live animation
     plt.show()
     waiting = input()

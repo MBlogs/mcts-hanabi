@@ -45,6 +45,7 @@ class Runner(object):
     #print(",progress=[", end="")
     errors = 0
 
+
     for episode in range(flags['num_episodes']):
       done = False
       observations = self.environment.reset()

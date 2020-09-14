@@ -3,8 +3,10 @@ Code source: https://github.com/MBlogs/mcts-hanabi
 This project implements an Redterminising Information Set Monte Carlo Tree Search agent into the hanabi\_learning\_environment research platform for Hanabi experiments developed by Google Deep Mind available at: https://github.com/deepmind/hanabi-learning-environment.
 New moves 'Return' and 'DealSpecific' were added to the underlying C++ framework to allow direct state manipulation (swapping cards in and out). Observation encoding and different Hanabi variations are not supported.
 
+![](mcts.gif)
+
 ### Getting started
-Instructions for installing the learning environment in a new linux environment:
+Instructions for installing into a new linux environment:
 ```
 sudo apt-get install g++            # if you don't already have a CXX compiler
 sudo apt-get install python3        # if don't have python

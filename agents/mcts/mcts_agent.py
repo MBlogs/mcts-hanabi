@@ -62,7 +62,7 @@ class MCTSAgent(Agent):
     self.max_information_tokens = config.get('information_tokens', 8)
     # For Animation
     self.vis_tree = Tree()
-    #print(self._get_mcts_config())
+    print(self._get_mcts_config())
 
   def _edit_mcts_config(self, mcts_type, config):
     """Interpret the mcts_type character"""

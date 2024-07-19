@@ -279,8 +279,8 @@ class MCTSAgent(Agent):
     if debug: print(f"mcts_agent.act: Chose node {best_node}")
     #print(f"mcts_agent.act: Tree looks like {self._get_tree_string()}")
     #print(f"mcts_agent.act: Chose node {best_node}")
-    if max([q/n for q,n in zip(self.Q.values(),self.N.values())]) > 1:
-      self.vis_tree.create_tree_animation()
+    #if max([q/n for q,n in zip(self.Q.values(),self.N.values())]) > 1:
+    #  self.vis_tree.create_tree_animation()
     return best_node.initial_move()
 
 

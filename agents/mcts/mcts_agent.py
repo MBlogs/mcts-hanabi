@@ -14,7 +14,7 @@ from agents.rule_based.rule_based_agents import IGGIAgent
 from agents.rule_based.rule_based_agents import LegalRandomAgent
 from agents.rule_based.rule_based_agents import FlawedAgent
 from agents.rule_based.rule_based_agents import MuteAgent
-from visualise_tree import Tree
+# from visualise_tree import Tree
 import pyhanabi
 
 AGENT_CLASSES = {'VanDenBerghAgent': VanDenBerghAgent,'FlawedAgent':FlawedAgent
@@ -60,9 +60,6 @@ class MCTSAgent(Agent):
     self.environment = mcts_env.make('Hanabi-Full', num_players=config["players"], mcts_player=config['player_id']
                                      ,determine_type = self.determine_type, score_type = self.score_type)
     self.max_information_tokens = config.get('information_tokens', 8)
-    # For Animation
-    self.vis_tree = Tree()
-    print(self._get_mcts_config())
 
   def _edit_mcts_config(self, mcts_type, config):
     """Interpret the mcts_type character"""
@@ -258,8 +255,8 @@ class MCTSAgent(Agent):
       # Rollout one iteration under this master determinisation
       path, reward = self._do_rollout(self.root_node, observation)
       rollout += 1
-      if rollout > 1:
-        self.vis_tree.update_tree_animation(self.children, self.N, self.Q)
+      #if rollout > 1:
+      #  self.vis_tree.update_tree_animation(self.children, self.N, self.Q)
       elapsed_time = (time.time() - start_time) * 1000
 
       if debug:

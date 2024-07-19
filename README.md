@@ -28,6 +28,21 @@ cd mcts-hanabi
 cmake .                             # Compile
 make                       
 ```
+
+In Mac, using brew
+```
+brew install gcc            # if you don't already have a CXX compiler
+brew install cmake          # if don't have cmake
+brew install python3        # if don't have python
+brew install python3-pip3   # if you don't already have pip
+pip3 install numpy                   # Python package dependency
+pip3 install cffi                    # Python package dependency
+brew install git                # if don't have git
+git clone https://github.com/MBlogs/mcts-hanabi
+cd mcts-hanabi
+cmake .                             # Compile
+make                       
+```
 ### Running Experiments
 ```
 python3 run_experiment.py --num_episodes 1 --players 3 --agent HumanAgent --agents MCTSAgent --mcts_types 000
